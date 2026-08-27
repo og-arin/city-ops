@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Power Feeder Line 3", "owner_dept_slug": "electric", "depth_meters": 1 },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[73.8570, 18.5208], [73.8605, 18.5234], [73.8638, 18.5253]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Substation Feed 9", "owner_dept_slug": "electric", "depth_meters": 2 },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[73.8200, 18.4900], [73.8220, 18.4920]]
+      }
+    }
+  ]
+}

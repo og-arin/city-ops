@@ -1,0 +1,18 @@
+version: "3.9"
+
+# Local dev only. Deployed env uses Supabase (which already has PostGIS
+# enabled) so this compose file is skipped in production — see docs/setup.md.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cityops
+    ports:
+      - "5432:5432"
+    volumes:
+      - cityops_pgdata:/var/lib/postgresql/data
+
+volumes:
+  cityops_pgdata:
