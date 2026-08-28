@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/cityops"
 
     # --- AI / RAG ---
-    GOOGLE_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"  # fast + free-tier friendly
     CHROMA_PERSIST_DIR: str = "./chroma_store"
 
     # --- Notifications ---

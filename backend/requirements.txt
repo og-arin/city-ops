@@ -7,9 +7,11 @@ pydantic==2.9.2
 pydantic-settings==2.5.2
 alembic==1.13.3
 python-dotenv==1.0.1
-shapely==2.0.6
+shapely>=2.0.6
 langchain==0.3.4
-langchain-google-genai==2.0.1
+langchain-groq==0.2.0
+langchain-huggingface==0.1.0
+sentence-transformers==3.2.1
 langchain-community==0.3.3
 chromadb==0.5.15
 pypdf==5.0.1
