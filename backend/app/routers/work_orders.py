@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -8,11 +9,35 @@ from shapely.geometry import shape
 from app.core.db import get_db
 from app.models.work_order import WorkOrder, WorkOrderStatus, ConflictLog
 from app.models.department import Department
+from app.models.infrastructure import InfrastructureAsset
 from app.schemas.work_order import WorkOrderCreate, WorkOrderResponse, AcknowledgeConflictRequest
 from app.services.spatial import check_conflicts
 from app.services.notifications import notify_conflict
 
 router = APIRouter(prefix="/work-orders", tags=["work-orders"])
+
+
+def _serialize_conflicts(db: Session, work_order_id: int) -> list[dict]:
+    rows = (
+        db.query(ConflictLog, InfrastructureAsset)
+        .join(InfrastructureAsset, ConflictLog.asset_id == InfrastructureAsset.id)
+        .filter(ConflictLog.work_order_id == work_order_id)
+        .order_by(ConflictLog.distance_meters.asc())
+        .all()
+    )
+    return [
+        {
+            "asset_id": asset.id,
+            "layer": asset.layer,
+            "name": asset.name,
+            "owner_dept_slug": asset.owner_dept_slug,
+            "severity": log.severity,
+            "distance_meters": log.distance_meters,
+            "conflict_log_id": log.id,
+            "acknowledged": log.acknowledged_at is not None,
+        }
+        for log, asset in rows
+    ]
 
 
 @router.post("", response_model=WorkOrderResponse)
@@ -68,7 +93,7 @@ def create_work_order(payload: WorkOrderCreate, db: Session = Depends(get_db)):
         start_date=work_order.start_date,
         end_date=work_order.end_date,
         created_at=work_order.created_at,
-        conflicts=conflicts,
+        conflicts=_serialize_conflicts(db, work_order.id) if conflicts else [],
     )
 
 
@@ -79,7 +104,7 @@ def list_work_orders(db: Session = Depends(get_db)):
         WorkOrderResponse(
             id=o.id, title=o.title, requesting_dept_slug=o.requesting_dept_slug,
             status=o.status.value, start_date=o.start_date, end_date=o.end_date,
-            created_at=o.created_at, conflicts=o.last_conflict_result or [],
+            created_at=o.created_at, conflicts=_serialize_conflicts(db, o.id),
         ) for o in orders
     ]
 
@@ -92,7 +117,7 @@ def get_work_order(work_order_id: int, db: Session = Depends(get_db)):
     return WorkOrderResponse(
         id=o.id, title=o.title, requesting_dept_slug=o.requesting_dept_slug,
         status=o.status.value, start_date=o.start_date, end_date=o.end_date,
-        created_at=o.created_at, conflicts=o.last_conflict_result or [],
+        created_at=o.created_at, conflicts=_serialize_conflicts(db, o.id),
     )
 
 
@@ -103,8 +128,6 @@ def acknowledge_conflict(payload: AcknowledgeConflictRequest, db: Session = Depe
     acknowledges a flagged conflict -> log gets timestamped -> once all
     conflicts on a work order are acknowledged, status flips to coordinating.
     """
-    from datetime import datetime
-
     log = db.query(ConflictLog).filter(ConflictLog.id == payload.conflict_log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Conflict log not found")

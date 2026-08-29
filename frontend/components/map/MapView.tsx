@@ -10,25 +10,31 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { api } from "@/lib/api";
 import type { Layer, InfrastructureFeatureCollection } from "@/lib/types";
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
+const MAPBOX_TOKEN =
+  process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+  process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ||
+  "";
 
-const LAYER_COLORS: Record<Layer, string> = {
-  road: "#6b7280",
-  water: "#3b82f6",
-  electric: "#f59e0b",
-  telecom: "#a855f7",
+const LAYER_CONFIG: Record<
+  Layer,
+  { color: string; width: number; dashed?: boolean }
+> = {
+  road:     { color: "#64748b", width: 4 },
+  water:    { color: "#0284c7", width: 3 },
+  electric: { color: "#f59e0b", width: 3, dashed: true },
+  telecom:  { color: "#9333ea", width: 3 },
 };
 
 interface MapViewProps {
   center?: [number, number];
   zoom?: number;
   activeLayers?: Layer[];
-  children?: React.ReactNode; // slot for DrawPolygon control etc.
-  onMapReady?: (map: mapboxgl.Map) => void; // gives pages the raw map instance, e.g. to wire up DrawPolygon
+  children?: React.ReactNode;
+  onMapReady?: (map: mapboxgl.Map) => void;
 }
 
 export default function MapView({
-  center = [73.8567, 18.5204], // demo city default — swap for your actual city center
+  center = [73.8567, 18.5204],
   zoom = 14,
   activeLayers = ["road", "water", "electric", "telecom"],
   children,
@@ -38,64 +44,140 @@ export default function MapView({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  // init map once
+  // Token safety guard — render a placeholder instead of crashing
+  if (!MAPBOX_TOKEN) {
+    return (
+      <div className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-slate-900 rounded-xl border border-slate-700">
+        <div className="text-center space-y-3 max-w-sm px-6">
+          <div className="text-4xl">🗺️</div>
+          <h3 className="text-lg font-semibold text-slate-200">
+            Mapbox Token Missing
+          </h3>
+          <p className="text-sm text-slate-400">
+            Add{" "}
+            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-400 text-xs">
+              NEXT_PUBLIC_MAPBOX_TOKEN
+            </code>{" "}
+            to your{" "}
+            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-400 text-xs">
+              .env.local
+            </code>
+            .{" "}
+            <a
+              href="https://account.mapbox.com/access-tokens/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-indigo-400 underline"
+            >
+              Get a free token →
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Set token once
+  if (!mapboxgl.accessToken) {
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/dark-v11",
       center,
       zoom,
     });
 
     map.on("load", () => {
+      map.resize(); // prevent partial-render glitch
       setLoaded(true);
       onMapReady?.(map);
     });
+
+    map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
     mapRef.current = map;
 
-    return () => map.remove();
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // load + toggle infra layers once map is ready
+  // Load infra layers once the map is ready
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!loaded || !mapRef.current) return;
     const map = mapRef.current;
 
-    (Object.keys(LAYER_COLORS) as Layer[]).forEach(async (layer) => {
+    (Object.keys(LAYER_CONFIG) as Layer[]).forEach(async (layer) => {
       const sourceId = `infra-${layer}`;
       if (map.getSource(sourceId)) return;
 
-      const data: InfrastructureFeatureCollection = await api.getInfrastructure(layer);
+      try {
+        const data: InfrastructureFeatureCollection =
+          await api.getInfrastructure(layer);
 
-      map.addSource(sourceId, { type: "geojson", data: data as any });
-      map.addLayer({
-        id: sourceId,
-        type: "line",
-        source: sourceId,
-        layout: { visibility: activeLayers.includes(layer) ? "visible" : "none" },
-        paint: { "line-color": LAYER_COLORS[layer], "line-width": 3 },
-      });
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, { type: "geojson", data: data as any });
+        }
+
+        const cfg = LAYER_CONFIG[layer];
+        const paintProps: mapboxgl.LinePaint = {
+          "line-color": cfg.color,
+          "line-width": cfg.width,
+          "line-opacity": 0.9,
+        };
+        if (cfg.dashed) {
+          paintProps["line-dasharray"] = [4, 2];
+        }
+
+        if (!map.getLayer(sourceId)) {
+          map.addLayer({
+            id: sourceId,
+            type: "line",
+            source: sourceId,
+            layout: {
+              visibility: activeLayers.includes(layer) ? "visible" : "none",
+              "line-cap": "round",
+              "line-join": "round",
+            },
+            paint: paintProps,
+          });
+        }
+      } catch (err) {
+        // Backend offline — silently skip; map still renders
+        console.warn(`[MapView] Could not load layer "${layer}":`, err);
+      }
     });
-  }, [loaded, activeLayers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
 
-  // apply visibility changes when activeLayers prop changes
+  // Apply visibility changes when activeLayers prop changes
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!loaded || !mapRef.current) return;
     const map = mapRef.current;
-    (Object.keys(LAYER_COLORS) as Layer[]).forEach((layer) => {
+    (Object.keys(LAYER_CONFIG) as Layer[]).forEach((layer) => {
       const id = `infra-${layer}`;
       if (map.getLayer(id)) {
-        map.setLayoutProperty(id, "visibility", activeLayers.includes(layer) ? "visible" : "none");
+        map.setLayoutProperty(
+          id,
+          "visibility",
+          activeLayers.includes(layer) ? "visible" : "none"
+        );
       }
     });
   }, [activeLayers, loaded]);
 
   return (
-    <div className="relative w-full h-full">
-      <div ref={mapContainer} className="w-full h-full rounded-lg" />
+    <div className="relative w-full h-full min-h-[500px]">
+      <div ref={mapContainer} className="absolute inset-0 rounded-xl" />
       {children}
     </div>
   );

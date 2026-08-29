@@ -45,6 +45,8 @@ export default function DrawPolygon({ map, onPolygonChange }: DrawPolygonProps) 
     map.on("draw.delete", handleUpdate);
 
     return () => {
+      if (!map || !map.getStyle()) return;
+
       map.off("draw.create", handleUpdate);
       map.off("draw.update", handleUpdate);
       map.off("draw.delete", handleUpdate);

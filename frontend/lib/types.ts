@@ -11,6 +11,8 @@ export interface ConflictItem {
   severity: Severity;
   distance_meters: number;
   owner_dept_slug: string;
+  conflict_log_id?: number; // absent on live /conflicts/check preview; present once persisted
+  acknowledged?: boolean;
 }
 
 export type WorkOrderStatus =
