@@ -15,11 +15,13 @@ class WorkOrderCreate(BaseModel):
 
 class ConflictItem(BaseModel):
     asset_id: int
-    layer: str            # water | electric | telecom | road
+    layer: str
     name: str
-    severity: str          # red | yellow
+    severity: str
     distance_meters: float
     owner_dept_slug: str
+    conflict_log_id: Optional[int] = None
+    acknowledged: bool = False
 
 
 class WorkOrderResponse(BaseModel):

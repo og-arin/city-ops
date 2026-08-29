@@ -10,18 +10,51 @@ import type {
   Layer,
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const REQUEST_TIMEOUT_MS = 10_000;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`API ${res.status}: ${body}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      ...options,
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`API ${res.status}: ${body || res.statusText}`);
+    }
+
+    return res.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.name === "AbortError") {
+        throw new Error(
+          "Request timed out after 10s. Is the backend running?"
+        );
+      }
+      // Re-throw with a friendlier message for network failures
+      if (
+        err.message === "Failed to fetch" ||
+        err.message.includes("fetch")
+      ) {
+        throw new Error(
+          "Cannot reach the CityOps backend. Check that it is running on " +
+            API_BASE
+        );
+      }
+      throw err;
+    }
+    throw new Error("An unexpected error occurred.");
+  } finally {
+    clearTimeout(timeoutId);
   }
-  return res.json();
 }
 
 export const api = {
