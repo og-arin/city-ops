@@ -15,6 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <link
+          href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+          rel="stylesheet"
+        />
+      </head>
       <body className="h-full flex flex-col bg-[var(--bg-base)] text-[var(--text-primary)] antialiased">
         <Navbar />
         <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
