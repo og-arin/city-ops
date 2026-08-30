@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { WorkOrderResponse } from "@/lib/types";
 
@@ -21,11 +22,12 @@ interface WorkOrderFormProps {
 }
 
 const inputCls =
-  "w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/60 transition-all";
+  "w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]/60 transition-all";
 
-const labelCls = "block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5";
+const labelCls = "block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5";
 
 export default function WorkOrderForm({ polygon, onSubmitted }: WorkOrderFormProps) {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [dept, setDept] = useState(DEPARTMENTS[0].slug);
   const [startDate, setStartDate] = useState("");
@@ -82,7 +84,7 @@ export default function WorkOrderForm({ polygon, onSubmitted }: WorkOrderFormPro
           onChange={(e) => setDept(e.target.value)}
         >
           {DEPARTMENTS.map((d) => (
-            <option key={d.slug} value={d.slug} className="bg-slate-800">
+            <option key={d.slug} value={d.slug} className="bg-[var(--surface)]">
               {d.name}
             </option>
           ))}
@@ -131,28 +133,37 @@ export default function WorkOrderForm({ polygon, onSubmitted }: WorkOrderFormPro
         </div>
       )}
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={!canSubmit}
-        className={`w-full py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-          canSubmit
-            ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-indigo-400 hover:shadow-indigo-500/40 active:scale-[0.98]"
-            : "bg-slate-800 text-slate-500 cursor-not-allowed"
-        }`}
-      >
-        {submitting ? (
-          <>
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Submitting Work Order...
-          </>
-        ) : (
-          <>
-            <span>🚀</span>
-            Submit Work Order
-          </>
-        )}
-      </button>
+      {/* Action buttons — Cancel has its own slot to the left */}
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={() => router.push("/work-orders")}
+          className="px-5 py-3 rounded-lg font-semibold text-sm text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className={`flex-1 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+            canSubmit
+              ? "bg-[var(--accent)] text-[var(--bg-base)] shadow-lg shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 hover:brightness-110 active:scale-[0.98]"
+              : "bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed"
+          }`}
+        >
+          {submitting ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Submitting Work Order...
+            </>
+          ) : (
+            <>
+              <span>🚀</span>
+              Submit Work Order
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import type { Layer } from "@/lib/types";
+import { LAYER_COLORS } from "@/lib/theme";
 
-const LAYER_META: Record<Layer, { label: string; icon: string; color: string }> = {
-  road:     { label: "Roads",          icon: "🛣️",  color: "#64748b" },
-  water:    { label: "Water Pipes",    icon: "💧",  color: "#0284c7" },
-  electric: { label: "Electric",       icon: "⚡",  color: "#f59e0b" },
-  telecom:  { label: "Telecom",        icon: "📡",  color: "#9333ea" },
+const LAYER_META: Record<Layer, { label: string; icon: string }> = {
+  road:     { label: "Roads",       icon: "🛣️" },
+  water:    { label: "Water Pipes", icon: "💧" },
+  electric: { label: "Electric",    icon: "⚡" },
+  telecom:  { label: "Telecom",     icon: "📡" },
 };
 
 interface LayerToggleProps {
@@ -24,12 +25,13 @@ export default function LayerToggle({ activeLayers, onChange }: LayerToggleProps
   };
 
   return (
-    <div className="absolute top-4 right-4 z-10 glass rounded-xl p-3 space-y-1 shadow-2xl shadow-black/40 min-w-[160px]">
-      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-1 pb-1 border-b border-slate-700/60 mb-2">
+    <div className="absolute top-4 right-4 z-10 surface rounded-xl p-3 space-y-1 shadow-2xl shadow-black/40 min-w-[160px]">
+      <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest px-1 pb-1 border-b border-[var(--border)] mb-2">
         Infrastructure Layers
       </p>
       {(Object.keys(LAYER_META) as Layer[]).map((layer) => {
-        const { label, icon, color } = LAYER_META[layer];
+        const { label, icon } = LAYER_META[layer];
+        const color = LAYER_COLORS[layer];
         const active = activeLayers.includes(layer);
 
         return (
@@ -38,8 +40,8 @@ export default function LayerToggle({ activeLayers, onChange }: LayerToggleProps
             onClick={() => toggle(layer)}
             className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer ${
               active
-                ? "bg-white/8 text-slate-100"
-                : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                ? "bg-white/8 text-[var(--text-primary)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5"
             }`}
           >
             {/* Color swatch */}
@@ -56,7 +58,7 @@ export default function LayerToggle({ activeLayers, onChange }: LayerToggleProps
             {/* Toggle pill */}
             <span
               className={`w-7 h-3.5 rounded-full flex-none transition-colors duration-200 relative ${
-                active ? "bg-indigo-500" : "bg-slate-700"
+                active ? "bg-[var(--accent)]" : "bg-[var(--border)]"
               }`}
             >
               <span

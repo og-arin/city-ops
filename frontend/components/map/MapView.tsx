@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { api } from "@/lib/api";
+import { LAYER_COLORS } from "@/lib/theme";
 import type { Layer, InfrastructureFeatureCollection } from "@/lib/types";
 
 const MAPBOX_TOKEN =
@@ -19,10 +20,10 @@ const LAYER_CONFIG: Record<
   Layer,
   { color: string; width: number; dashed?: boolean }
 > = {
-  road:     { color: "#64748b", width: 4 },
-  water:    { color: "#0284c7", width: 3 },
-  electric: { color: "#f59e0b", width: 3, dashed: true },
-  telecom:  { color: "#9333ea", width: 3 },
+  road:     { color: LAYER_COLORS.road,     width: 4 },
+  water:    { color: LAYER_COLORS.water,    width: 3 },
+  electric: { color: LAYER_COLORS.electric, width: 3, dashed: true },
+  telecom:  { color: LAYER_COLORS.telecom,  width: 3 },
 };
 
 interface MapViewProps {
@@ -47,19 +48,19 @@ export default function MapView({
   // Token safety guard — render a placeholder instead of crashing
   if (!MAPBOX_TOKEN) {
     return (
-      <div className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-slate-900 rounded-xl border border-slate-700">
+      <div className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
         <div className="text-center space-y-3 max-w-sm px-6">
           <div className="text-4xl">🗺️</div>
-          <h3 className="text-lg font-semibold text-slate-200">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
             Mapbox Token Missing
           </h3>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             Add{" "}
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-400 text-xs">
+            <code className="bg-[var(--surface)] px-1.5 py-0.5 rounded text-[var(--accent)] text-xs font-mono-data">
               NEXT_PUBLIC_MAPBOX_TOKEN
             </code>{" "}
             to your{" "}
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-400 text-xs">
+            <code className="bg-[var(--surface)] px-1.5 py-0.5 rounded text-[var(--accent)] text-xs font-mono-data">
               .env.local
             </code>
             .{" "}
@@ -67,7 +68,7 @@ export default function MapView({
               href="https://account.mapbox.com/access-tokens/"
               target="_blank"
               rel="noreferrer"
-              className="text-indigo-400 underline"
+              className="text-[var(--accent)] underline"
             >
               Get a free token →
             </a>

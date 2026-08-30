@@ -4,18 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import type { WorkOrderResponse } from "@/lib/types";
+import { STATUS_COLORS } from "@/lib/theme";
+import type { WorkOrderResponse, WorkOrderStatus } from "@/lib/types";
 
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; cls: string }
-> = {
-  pending:     { label: "Pending",      cls: "bg-slate-500/20 text-slate-300 border-slate-500/40" },
-  conflict:    { label: "Conflict",     cls: "bg-red-500/20 text-red-300 border-red-500/40" },
-  coordinating:{ label: "Coordinating",cls: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
-  approved:    { label: "Approved",     cls: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
-  completed:   { label: "Completed",   cls: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
-  rejected:    { label: "Rejected",    cls: "bg-rose-500/20 text-rose-300 border-rose-500/40" },
+const STATUS_LABELS: Record<WorkOrderStatus, string> = {
+  pending:      "Pending",
+  conflict:     "Conflict",
+  coordinating: "Coordinating",
+  approved:     "Approved",
+  completed:    "Completed",
+  rejected:     "Rejected",
 };
 
 const DEPT_LABELS: Record<string, string> = {
@@ -26,12 +24,29 @@ const DEPT_LABELS: Record<string, string> = {
 
 const ALL_DEPTS = ["all", "road", "water", "electric", "telecom", "traffic", "waste", "municipal", "emergency"];
 
+function StatusBadge({ status }: { status: WorkOrderStatus }) {
+  const color = STATUS_COLORS[status] ?? STATUS_COLORS.pending;
+  const label = STATUS_LABELS[status] ?? status;
+  return (
+    <span
+      className="text-[11px] font-bold px-2.5 py-1 rounded-full border"
+      style={{
+        backgroundColor: `${color}20`,
+        color: color,
+        borderColor: `${color}66`,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function SkeletonRow() {
   return (
-    <tr className="border-b border-slate-800/60">
+    <tr className="border-b border-[var(--border)]">
       {[1, 2, 3, 4].map((i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-slate-800 rounded animate-pulse" />
+          <div className="h-4 bg-[var(--surface)] rounded animate-pulse" />
         </td>
       ))}
     </tr>
@@ -72,14 +87,14 @@ export default function WorkOrdersListPage() {
         {/* Page header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Work Orders</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Work Orders</h1>
+            <p className="text-sm text-[var(--text-muted)] mt-0.5">
               All infrastructure work requests across departments
             </p>
           </div>
           <Link
             href="/work-orders/new"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-indigo-400 transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--bg-base)] text-sm font-semibold shadow-lg shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 hover:brightness-110 transition-all"
           >
             <span>+</span> New Request
           </Link>
@@ -87,22 +102,22 @@ export default function WorkOrdersListPage() {
 
         {/* Filter bar */}
         <div className="flex items-center gap-3">
-          <label className="text-xs text-slate-500 font-semibold uppercase tracking-wider flex-none">
+          <label className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider flex-none">
             Filter by dept:
           </label>
           <select
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
-            className="bg-slate-800/60 border border-slate-700/60 text-slate-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            className="bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
           >
             {ALL_DEPTS.map((d) => (
-              <option key={d} value={d} className="bg-slate-800">
+              <option key={d} value={d} className="bg-[var(--surface)]">
                 {d === "all" ? "All Departments" : DEPT_LABELS[d] ?? d}
               </option>
             ))}
           </select>
           {!loading && !error && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-[var(--text-muted)]">
               {filtered.length} order{filtered.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -114,7 +129,7 @@ export default function WorkOrdersListPage() {
             <span className="text-2xl">⚠️</span>
             <div>
               <p className="text-sm font-semibold text-red-400">Could not load work orders</p>
-              <p className="text-xs text-slate-500 mt-1">{error}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">{error}</p>
               <button
                 onClick={() => {
                   setError(null);
@@ -124,7 +139,7 @@ export default function WorkOrdersListPage() {
                     .catch((err) => setError(err instanceof Error ? err.message : "Failed"))
                     .finally(() => setLoading(false));
                 }}
-                className="mt-2 text-xs text-indigo-400 underline"
+                className="mt-2 text-xs text-[var(--accent)] underline"
               >
                 Try again
               </button>
@@ -134,60 +149,62 @@ export default function WorkOrdersListPage() {
 
         {/* Table */}
         {!error && (
-          <div className="rounded-xl border border-slate-700/60 overflow-hidden">
+          <div className="rounded-xl border border-[var(--border)] overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-900/80 border-b border-slate-700/60">
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <tr className="bg-[var(--bg-base)] border-b border-[var(--border)]">
+                  <th className="px-4 py-3 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                     Work Order
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">
+                  <th className="px-4 py-3 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider hidden sm:table-cell">
                     Department
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">
+                  <th className="px-4 py-3 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider hidden md:table-cell">
                     Date Range
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[var(--border)]">
                 {loading && [1, 2, 3].map((i) => <SkeletonRow key={i} />)}
 
                 {!loading &&
                   filtered.map((o) => {
-                    const status = STATUS_CONFIG[o.status] ?? STATUS_CONFIG.pending;
                     return (
                       <tr
                         key={o.id}
                         onClick={() => router.push(`/work-orders/${o.id}`)}
-                        className="cursor-pointer hover:bg-slate-800/40 transition-colors group"
+                        className="cursor-pointer hover:bg-white/[0.03] transition-colors group"
                       >
                         <td className="px-4 py-3.5">
-                          <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
+                          <p className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-white transition-colors">
                             {o.title}
                           </p>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-xs text-[var(--text-muted)] mt-0.5 font-mono-data">
                             #{o.id}
                           </p>
                         </td>
                         <td className="px-4 py-3.5 hidden sm:table-cell">
-                          <span className="text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-full">
+                          <span
+                            className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                            style={{
+                              backgroundColor: "rgba(45, 212, 191, 0.12)",
+                              color: "var(--accent)",
+                              border: "1px solid rgba(45, 212, 191, 0.3)",
+                            }}
+                          >
                             {DEPT_LABELS[o.requesting_dept_slug] ?? o.requesting_dept_slug}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 hidden md:table-cell">
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-[var(--text-muted)]">
                             {formatDate(o.start_date)} → {formatDate(o.end_date)}
                           </p>
                         </td>
                         <td className="px-4 py-3.5">
-                          <span
-                            className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${status.cls}`}
-                          >
-                            {status.label}
-                          </span>
+                          <StatusBadge status={o.status} />
                         </td>
                       </tr>
                     );
@@ -199,17 +216,17 @@ export default function WorkOrdersListPage() {
             {!loading && !error && filtered.length === 0 && (
               <div className="text-center py-16 px-6">
                 <div className="text-5xl mb-4">📋</div>
-                <h3 className="text-base font-semibold text-slate-300">
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">
                   {deptFilter === "all" ? "No work orders yet" : `No orders for ${DEPT_LABELS[deptFilter] ?? deptFilter}`}
                 </h3>
-                <p className="text-sm text-slate-500 mt-1 mb-5">
+                <p className="text-sm text-[var(--text-muted)] mt-1 mb-5">
                   {deptFilter === "all"
                     ? "Create the first work order to start coordinating infrastructure work."
                     : "Try changing the department filter, or create a new request."}
                 </p>
                 <Link
                   href="/work-orders/new"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-[var(--bg-base)] text-sm font-semibold rounded-lg hover:brightness-110 transition-colors"
                 >
                   + Create Work Order
                 </Link>
