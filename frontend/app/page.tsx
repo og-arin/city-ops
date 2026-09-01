@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import {
+  MapPin,
+  Handshake,
+  TriangleAlert,
+  Landmark,
+  Building2,
+  Route,
+  Droplets,
+  type LucideIcon,
+} from "lucide-react";
 
 interface Stats {
   activeAssets: number;
@@ -14,12 +24,18 @@ interface Stats {
 const STAT_CARDS: {
   key: keyof Stats;
   label: string;
-  icon: string;
+  Icon: LucideIcon;
 }[] = [
-  { key: "activeAssets", label: "Active Assets Tracked", icon: "📍" },
-  { key: "deptsCoordinating", label: "Departments Coordinating", icon: "🤝" },
-  { key: "liveConflicts", label: "Live Conflicts Detected", icon: "⚠️" },
-  { key: "totalDepts", label: "Departments on Platform", icon: "🏛️" },
+  { key: "activeAssets", label: "Active Assets Tracked", Icon: MapPin },
+  { key: "deptsCoordinating", label: "Departments Coordinating", Icon: Handshake },
+  { key: "liveConflicts", label: "Live Conflicts Detected", Icon: TriangleAlert },
+  { key: "totalDepts", label: "Departments on Platform", Icon: Landmark },
+];
+
+const FEATURE_PILLS: { label: string; Icon: LucideIcon }[] = [
+  { label: "Administrative Wards", Icon: Building2 },
+  { label: "Road Network", Icon: Route },
+  { label: "Drainage", Icon: Droplets },
 ];
 
 export default function LandingPage() {
@@ -64,7 +80,7 @@ export default function LandingPage() {
           activeAssets,
           deptsCoordinating,
           liveConflicts,
-          totalDepts: 8, // matches seed_data.py
+          totalDepts: 8,
         });
       } catch {
         // Backend offline — keep defaults at 0
@@ -84,8 +100,8 @@ export default function LandingPage() {
       <div className="relative z-10 max-w-2xl space-y-8">
         {/* Logo + Title */}
         <div className="space-y-4">
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-[var(--accent)] flex items-center justify-center text-4xl shadow-2xl shadow-[var(--accent)]/20">
-            🏙️
+          <div className="w-20 h-20 mx-auto neu flex items-center justify-center">
+            <Building2 className="w-9 h-9 text-[var(--accent)]" />
           </div>
           <h1 className="text-5xl font-bold tracking-tight text-white">
             CityOps{" "}
@@ -101,13 +117,10 @@ export default function LandingPage() {
         </div>
 
         {/* Live stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {STAT_CARDS.map(({ key, label, icon }) => (
-            <div
-              key={key}
-              className="surface rounded-xl px-4 py-4 text-center space-y-1"
-            >
-              <div className="text-2xl">{icon}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {STAT_CARDS.map(({ key, label, Icon }) => (
+            <div key={key} className="neu px-4 py-5 text-center space-y-2">
+              <Icon className="w-6 h-6 mx-auto text-[var(--accent)]" />
               <p
                 className={`text-2xl font-bold font-mono-data text-[var(--text-primary)] transition-opacity duration-500 ${
                   loaded ? "opacity-100" : "opacity-30"
@@ -124,16 +137,13 @@ export default function LandingPage() {
 
         {/* Feature pills */}
         <div className="flex flex-wrap justify-center gap-2">
-          {[
-            "🏢 Administrative Wards",
-            "🛣️ Road Network",
-            "🌊 Drainage",
-          ].map((feat) => (
+          {FEATURE_PILLS.map(({ label, Icon }) => (
             <span
-              key={feat}
-              className="text-xs font-medium text-[var(--text-muted)] surface px-3 py-1.5 rounded-full"
+              key={label}
+              className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] neu-pill px-4 py-2"
             >
-              {feat}
+              <Icon className="w-3.5 h-3.5" />
+              {label}
             </span>
           ))}
         </div>
@@ -142,13 +152,13 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-3">
           <Link
             href="/dashboard"
-            className="px-8 py-3.5 rounded-xl bg-[var(--accent)] text-[var(--bg-base)] font-semibold text-sm shadow-xl shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 hover:brightness-110 transition-all active:scale-[0.98]"
+            className="px-8 py-3.5 neu-accent font-semibold text-sm"
           >
             Open Dashboard →
           </Link>
           <Link
             href="/work-orders/new"
-            className="px-8 py-3.5 rounded-xl surface text-[var(--text-muted)] font-semibold text-sm hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-all"
+            className="px-8 py-3.5 neu-button text-[var(--text-muted)] font-semibold text-sm hover:text-[var(--text-primary)]"
           >
             New Work Order
           </Link>

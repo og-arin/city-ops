@@ -24,11 +24,12 @@ export const STATUS_COLORS: Record<WorkOrderStatus, string> = {
   rejected: "#F87171",     // muted rose — distinct from active "conflict" red
 } as const;
 
+
 export const TOKENS = {
-  bgBase: "#10131A",
-  surface: "#1B2029",
-  border: "#2A3140",
+  bgBase: "#0A0A0A",
+  surface: "#0A0A0A",
+  border: "#1F1F1F",
   textPrimary: "#E8EBF0",
   textMuted: "#8890A0",
-  accent: "#2DD4BF",
+  accent: "#4A9EFF", // matches globals.css --accent
 } as const;

@@ -8,15 +8,15 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --nav-height: 64px;
-    --bg-base: #10131A;
-    --surface: #1B2029;
-    --border: #2A3140;
-    --text-primary: #E8EBF0;
-    --text-muted: #8890A0;
-    --accent: #2DD4BF;
-  }
+:root {
+  --nav-height: 64px;
+  --bg-base: #0A0A0A;
+  --surface: #0A0A0A;
+  --border: #1F1F1F;
+  --text-primary: #E8EBF0;
+  --text-muted: #8890A0;
+  --accent: #4A9EFF;
+}
 
   html,
   body {
@@ -25,54 +25,78 @@
     color: var(--text-primary);
   }
 }
-
 @layer utilities {
-  .surface {
-    background: var(--surface);
-    border: 1px solid var(--border);
+  /* Neumorphic surface — replaces the old bordered .surface class */
+  .neu {
+    background: var(--bg-base);
+    border-radius: 20px;
+    box-shadow:
+      8px 8px 16px rgba(0, 0, 0, 0.55),
+      -8px -8px 16px rgba(255, 255, 255, 0.035);
+  }
+
+  /* Pressed/active state — toggles, selected items */
+  .neu-pressed {
+    background: var(--bg-base);
+    border-radius: 20px;
+    box-shadow:
+      inset 4px 4px 8px rgba(0, 0, 0, 0.5),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.03);
+  }
+
+  /* Interactive button — raises on hover, presses on click */
+  .neu-button {
+    background: var(--bg-base);
+    border-radius: 14px;
+    box-shadow:
+      5px 5px 10px rgba(0, 0, 0, 0.5),
+      -5px -5px 10px rgba(255, 255, 255, 0.03);
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .neu-button:hover {
+    box-shadow:
+      7px 7px 14px rgba(0, 0, 0, 0.55),
+      -7px -7px 14px rgba(255, 255, 255, 0.04);
+  }
+  .neu-button:active {
+    box-shadow:
+      inset 3px 3px 6px rgba(0, 0, 0, 0.5),
+      inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+    transform: scale(0.98);
   }
 
   .font-mono-data {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
   }
 }
+  /* Pill-shaped neumorphic surface — for tags/badges that aren't full cards */
+  .neu-pill {
+    background: var(--bg-base);
+    border-radius: 999px;
+    box-shadow:
+      5px 5px 10px rgba(0, 0, 0, 0.5),
+      -5px -5px 10px rgba(255, 255, 255, 0.03);
+  }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
-}
-
-/* Mapbox draw controls theming */
-.mapboxgl-ctrl-group {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
-}
-
-.mapboxgl-ctrl-group button {
-  background-color: transparent !important;
-  border-color: var(--border) !important;
-}
-
-.mapboxgl-ctrl-group button:hover {
-  background-color: rgba(45, 212, 191, 0.15) !important;
-}
-
-.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
-  filter: invert(1) !important;
-  opacity: 0.8;
-}
+  /* Primary action — neumorphic but tinted with accent in the light-shadow,
+     so it reads as "the important one" without breaking the soft aesthetic */
+  .neu-accent {
+    background: var(--bg-base);
+    color: var(--accent);
+    border-radius: 14px;
+    box-shadow:
+      6px 6px 14px rgba(0, 0, 0, 0.6),
+      -6px -6px 14px rgba(74, 158, 255, 0.08);
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .neu-accent:hover {
+    box-shadow:
+      8px 8px 18px rgba(0, 0, 0, 0.65),
+      -8px -8px 18px rgba(74, 158, 255, 0.14);
+  }
+  .neu-accent:active {
+    box-shadow:
+      inset 3px 3px 6px rgba(0, 0, 0, 0.5),
+      inset -3px -3px 6px rgba(45, 212, 191, 0.06);
+    transform: scale(0.98);
+  }

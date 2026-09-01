@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Landmark } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -23,11 +24,11 @@ export default function Navbar() {
       className="flex-none z-50 w-full"
       style={{ height: "var(--nav-height)" }}
     >
-      <nav className="h-full flex items-center justify-between px-6 surface border-b border-[var(--border)]">
+      <nav className="h-full flex items-center justify-between px-6 bg-[var(--bg-base)]">
         {/* Logo & Branding */}
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center text-sm font-bold shadow-lg shadow-[var(--accent)]/20 group-hover:shadow-[var(--accent)]/40 transition-shadow">
-            🏙
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg neu flex items-center justify-center">
+            <Landmark className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <span className="font-bold text-[var(--text-primary)] text-sm tracking-tight">
             CityOps AI
@@ -42,10 +43,10 @@ export default function Navbar() {
               <Link
                 key={href}
                 href={href}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
+                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                   active
-                    ? "bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5"
+                    ? "neu-pressed text-[var(--accent)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {label}
@@ -55,8 +56,8 @@ export default function Navbar() {
         </div>
 
         {/* System Status */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full surface text-xs text-[var(--text-muted)] font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full neu text-xs text-[var(--text-muted)] font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           Spatial Engine Active
         </div>
       </nav>

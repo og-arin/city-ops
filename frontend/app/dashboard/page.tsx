@@ -7,7 +7,7 @@ import type { Layer } from "@/lib/types";
 
 export default function DashboardPage() {
   const [activeLayers, setActiveLayers] = useState<Layer[]>([
-    "road", "water", "electric", "telecom",
+    "road", "drainage", "ward",
   ]);
 
   return (
