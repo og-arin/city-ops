@@ -32,14 +32,14 @@ const DEPT_LABELS: Record<string, string> = {
 function Skeleton() {
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-6 animate-pulse">
+      <div className="max-w-2xl mx-auto px-6 py-6 space-y-5 animate-pulse">
         <div className="h-4 w-32 bg-[var(--surface)] rounded" />
-        <div className="neu p-6 space-y-4">
+        <div className="surface p-6 space-y-4">
           <div className="h-6 w-3/4 bg-[var(--border)] rounded" />
           <div className="h-4 w-1/2 bg-[var(--border)] rounded" />
           <div className="h-4 w-1/3 bg-[var(--border)] rounded" />
         </div>
-        <div className="neu p-6 h-32" />
+        <div className="surface p-6 h-32" />
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ export default function WorkOrderDetailPage() {
   if (error) {
     return (
       <div className="h-full overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-6 py-8">
+        <div className="max-w-2xl mx-auto px-6 py-6">
           <Link href="/work-orders" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-6 transition-colors">
             ← Back to Work Orders
           </Link>
@@ -106,7 +106,7 @@ export default function WorkOrderDetailPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+      <div className="max-w-2xl mx-auto px-6 py-6 space-y-4">
         {/* Back link */}
         <Link
           href="/work-orders"
@@ -116,7 +116,7 @@ export default function WorkOrderDetailPage() {
         </Link>
 
         {/* Order detail card */}
-        <div className="neu !rounded-2xl overflow-hidden">
+        <div className="surface overflow-hidden">
           <div className="px-6 py-5 border-b border-[var(--border)]">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -140,7 +140,7 @@ export default function WorkOrderDetailPage() {
               <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
                 Department
               </p>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full text-[var(--accent)] neu-pill">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full text-[var(--accent)] pill">
                 {DEPT_LABELS[order!.requesting_dept_slug] ?? order!.requesting_dept_slug}
               </span>
             </div>

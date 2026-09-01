@@ -22,6 +22,8 @@ interface MapViewProps {
   activeLayers?: Layer[];
   children?: React.ReactNode;
   onMapReady?: (map: mapboxgl.Map) => void;
+  /** false for decorative/backdrop use — disables pan/zoom/drag and hides controls. */
+  interactive?: boolean;
 }
 
 export default function MapView({
@@ -30,6 +32,7 @@ export default function MapView({
   activeLayers = ["ward", "road", "drainage"],
   children,
   onMapReady,
+  interactive = true,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -44,12 +47,20 @@ export default function MapView({
       style: "mapbox://styles/mapbox/dark-v11",
       center,
       zoom,
+      interactive,
     });
 
-    map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+    if (interactive) {
+      map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+    }
     mapRef.current = map;
 
     map.on("load", () => {
+      // In dev, React StrictMode mounts/cleans up/remounts this effect once;
+      // if this instance's "load" fires after cleanup already tore it down
+      // (mapRef.current now points at the remount's map, or nothing), skip —
+      // acting on it would touch a removed map and crash.
+      if (mapRef.current !== map) return;
       map.resize(); // The single most important fix for blank screens
       setIsMapLoaded(true);
       if (onMapReady) onMapReady(map);
@@ -65,18 +76,22 @@ export default function MapView({
   // --- DATA FETCHING & LAYER RENDERING ---
   useEffect(() => {
     if (!isMapLoaded || !mapRef.current) return;
-    const map = mapRef.current;
+    // Guards every map access below: if this effect is cleaned up (unmount,
+    // or a StrictMode dev double-invoke) while an `await` is in flight, the
+    // loop must stop touching the map instead of calling into a removed one.
+    let cancelled = false;
 
     const loadLayers = async () => {
       for (const layer of Object.keys(LAYER_CONFIG) as Layer[]) {
+        if (cancelled || !mapRef.current) return;
         const sourceId = `infra-${layer}`;
-        if (map.getSource(sourceId)) continue; // Prevent double-fetching
+        if (mapRef.current.getSource(sourceId)) continue; // Prevent double-fetching
 
         try {
           const data = await api.getInfrastructure(layer);
 
           // Safety checks after the async await
-          if (!mapRef.current || !mapRef.current.isStyleLoaded()) continue;
+          if (cancelled || !mapRef.current || !mapRef.current.isStyleLoaded()) continue;
           if (mapRef.current.getSource(sourceId)) continue;
 
           mapRef.current.addSource(sourceId, { type: "geojson", data: data as any });
@@ -113,6 +128,9 @@ export default function MapView({
     };
     
     loadLayers();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapLoaded]);
 
@@ -131,7 +149,7 @@ export default function MapView({
 
   // --- THE UNBREAKABLE CONTAINER ---
   return (
-    <div style={{ position: 'relative', width: '100%', minHeight: '600px', height: 'calc(100vh - 100px)' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '400px' }}>
       <div ref={mapContainer} style={{ position: 'absolute', inset: 0, borderRadius: '0.5rem' }} />
       {children}
     </div>

@@ -1,6 +1,9 @@
 // frontend/lib/theme.ts
-// Single source of truth for all design tokens.
-// Import from here — never hand-roll hex values in components.
+// Fixed color tokens that don't shift between light/dark theme — status and
+// severity badges stay bold/flat by design, and Mapbox paint properties need
+// literal values (CSS custom properties don't reach the GL canvas). Base UI
+// tokens (bg/surface/border/text/accent) live in globals.css as CSS vars and
+// already respond to the [data-theme] toggle — don't duplicate them here.
 
 import type { Layer, WorkOrderStatus, Severity } from "./types";
 
@@ -22,14 +25,4 @@ export const STATUS_COLORS: Record<WorkOrderStatus, string> = {
   approved: "#2DD4BF",     // teal accent
   completed: "#34D399",    // green
   rejected: "#F87171",     // muted rose — distinct from active "conflict" red
-} as const;
-
-
-export const TOKENS = {
-  bgBase: "#0A0A0A",
-  surface: "#0A0A0A",
-  border: "#1F1F1F",
-  textPrimary: "#E8EBF0",
-  textMuted: "#8890A0",
-  accent: "#4A9EFF", // matches globals.css --accent
 } as const;

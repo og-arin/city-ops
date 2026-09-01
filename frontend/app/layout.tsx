@@ -16,6 +16,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
+        {/* Runs before first paint so the saved theme applies with no flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('cityops-theme');if(t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();`,
+          }}
+        />
         <link
           href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
           rel="stylesheet"
