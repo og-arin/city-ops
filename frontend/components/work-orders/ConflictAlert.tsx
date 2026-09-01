@@ -33,7 +33,7 @@ export default function ConflictAlert({
   // --- IDLE: no polygon drawn yet ---
   if (!hasPolygon && !checking) {
     return (
-      <div className="neu p-4 flex items-start gap-3">
+      <div className="surface p-4 flex items-start gap-3">
         <PenLine className="w-5 h-5 mt-0.5 text-[var(--text-muted)] flex-none" />
         <div>
           <p className="text-sm font-semibold text-[var(--text-primary)]">Draw a Work Area</p>
@@ -49,7 +49,7 @@ export default function ConflictAlert({
   // --- SCANNING: polygon drawn, API call in-flight ---
   if (checking) {
     return (
-      <div className="neu p-4 flex items-center gap-3">
+      <div className="surface p-4 flex items-center gap-3">
         <div className="relative flex-none">
           <div className="w-8 h-8 rounded-full border-2 border-[var(--accent)]/30 border-t-[var(--accent)] animate-spin" />
         </div>
@@ -68,7 +68,7 @@ export default function ConflictAlert({
   // --- CLEAR: polygon checked, no conflicts ---
   if (conflicts.length === 0) {
     return (
-      <div className="neu p-4 flex items-center gap-3">
+      <div className="surface p-4 flex items-center gap-3">
         <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-none" />
         <div>
           <p className="text-sm font-semibold text-emerald-400">Zone Clear for Excavation</p>
@@ -80,7 +80,7 @@ export default function ConflictAlert({
     );
   }
 
-  // --- CONFLICTS DETECTED --- (intentionally flat/bold, not neumorphic — this is the alert that breaks the calm UI)
+  // --- CONFLICTS DETECTED --- (intentionally bold/saturated — breaks the calm bordered UI on purpose)
   const depts = Array.from(new Set(conflicts.map((c) => c.owner_dept_slug)));
   const hardCount = conflicts.filter((c) => c.severity === "red").length;
   const warnCount = conflicts.filter((c) => c.severity === "yellow").length;
@@ -179,7 +179,7 @@ export default function ConflictAlert({
           {depts.map((d) => (
             <span
               key={d}
-              className="text-xs font-semibold px-2.5 py-1 rounded-full text-[var(--accent)] neu-pill"
+              className="text-xs font-semibold px-2.5 py-1 rounded-full text-[var(--accent)] pill"
             >
               {DEPT_LABELS[d] ?? d}
             </span>

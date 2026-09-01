@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -21,13 +22,13 @@ export default function Navbar() {
 
   return (
     <header
-      className="flex-none z-50 w-full"
+      className="flex-none z-50 w-full border-b border-[var(--border)]"
       style={{ height: "var(--nav-height)" }}
     >
       <nav className="h-full flex items-center justify-between px-6 bg-[var(--bg-base)]">
         {/* Logo & Branding */}
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg neu flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg surface flex items-center justify-center">
             <Landmark className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <span className="font-bold text-[var(--text-primary)] text-sm tracking-tight">
@@ -43,9 +44,9 @@ export default function Navbar() {
               <Link
                 key={href}
                 href={href}
-                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
                   active
-                    ? "neu-pressed text-[var(--accent)]"
+                    ? "surface-sunken text-[var(--accent)]"
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
@@ -55,10 +56,13 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* System Status */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full neu text-xs text-[var(--text-muted)] font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          Spatial Engine Active
+        {/* System Status + theme */}
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full pill text-xs text-[var(--text-muted)] font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Spatial Engine Active
+          </div>
+          <ThemeToggle />
         </div>
       </nav>
     </header>

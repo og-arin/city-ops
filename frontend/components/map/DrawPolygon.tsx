@@ -3,9 +3,34 @@
 import { useEffect, useRef } from "react";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+// @ts-expect-error — no type declarations shipped for this package
+import FreehandMode from "mapbox-gl-draw-freehand-mode";
 import type mapboxgl from "mapbox-gl";
 import { api } from "../../lib/api";
 import type { ConflictCheckResponse } from "../../lib/types";
+
+// mapbox-gl-draw's default theme always fills a Polygon feature, even the
+// still-open ring being actively dragged — so the "enclosed area" shows
+// mid-draw. Every rendered feature carries a `mode` property set to the
+// currently active mode name, so suppress the fill specifically while
+// draw_polygon is active; it fills normally once the drag ends and control
+// hands off to simple_select.
+const defaultTheme = (MapboxDraw as unknown as { lib: { theme: mapboxgl.AnyLayer[] } }).lib.theme;
+const DRAW_STYLES = defaultTheme.map((layer: any) =>
+  layer.id === "gl-draw-polygon-fill"
+    ? {
+        ...layer,
+        paint: {
+          ...layer.paint,
+          "fill-opacity": [
+            "case",
+            ["==", ["get", "mode"], "draw_polygon"], 0,
+            layer.paint["fill-opacity"],
+          ],
+        },
+      }
+    : layer
+);
 
 interface DrawPolygonProps {
   map: mapboxgl.Map | null; // pass mapRef.current down from the parent page
@@ -23,6 +48,12 @@ export default function DrawPolygon({ map, onPolygonChange, onConflictCheck }: D
       drawRef.current = new MapboxDraw({
         displayControlsDefault: false,
         controls: { polygon: true, trash: true },
+        // Draw by dragging (lasso-style) instead of click-per-vertex.
+        modes: {
+          ...MapboxDraw.modes,
+          draw_polygon: FreehandMode,
+        } as unknown as { [modeKey: string]: MapboxDraw.DrawCustomMode },
+        styles: DRAW_STYLES as unknown as MapboxDraw.MapboxDrawOptions["styles"],
       });
     }
 

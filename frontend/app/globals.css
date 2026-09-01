@@ -10,12 +10,31 @@
 @layer base {
 :root {
   --nav-height: 64px;
+
+  /* Dark theme (default) */
   --bg-base: #0A0A0A;
-  --surface: #0A0A0A;
-  --border: #1F1F1F;
+  --surface: #131316;
+  --surface-hover: #1A1A1E;
+  --border: #232326;
+  --border-strong: #33333A;
   --text-primary: #E8EBF0;
   --text-muted: #8890A0;
   --accent: #4A9EFF;
+  --on-accent: #04101C;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg-base: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-hover: #F0F1F4;
+  --border: #E1E3E8;
+  --border-strong: #C7CAD1;
+  --text-primary: #15171C;
+  --text-muted: #63666F;
+  --accent: #1D6FE0;
+  --on-accent: #FFFFFF;
+  color-scheme: light;
 }
 
   html,
@@ -23,80 +42,110 @@
     height: 100%;
     font-family: 'Inter', system-ui, sans-serif;
     color: var(--text-primary);
+    background: var(--bg-base);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-up {
+      animation: none;
+    }
+    .btn-primary::after {
+      transition: none !important;
+    }
   }
 }
+
 @layer utilities {
-  /* Neumorphic surface — replaces the old bordered .surface class */
-  .neu {
-    background: var(--bg-base);
-    border-radius: 20px;
-    box-shadow:
-      8px 8px 16px rgba(0, 0, 0, 0.55),
-      -8px -8px 16px rgba(255, 255, 255, 0.035);
+  /* Flat card — replaces the old neumorphic .neu surface */
+  .surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
   }
 
-  /* Pressed/active state — toggles, selected items */
-  .neu-pressed {
+  /* Recessed surface — inputs, selects, pressed/inset state */
+  .surface-sunken {
     background: var(--bg-base);
-    border-radius: 20px;
-    box-shadow:
-      inset 4px 4px 8px rgba(0, 0, 0, 0.5),
-      inset -4px -4px 8px rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.15s ease;
+  }
+  .surface-sunken:focus-within {
+    border-color: var(--accent);
   }
 
-  /* Interactive button — raises on hover, presses on click */
-  .neu-button {
-    background: var(--bg-base);
-    border-radius: 14px;
-    box-shadow:
-      5px 5px 10px rgba(0, 0, 0, 0.5),
-      -5px -5px 10px rgba(255, 255, 255, 0.03);
-    transition: box-shadow 0.15s ease, transform 0.1s ease;
+  /* Interactive button */
+  .btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
   }
-  .neu-button:hover {
-    box-shadow:
-      7px 7px 14px rgba(0, 0, 0, 0.55),
-      -7px -7px 14px rgba(255, 255, 255, 0.04);
+  .btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
   }
-  .neu-button:active {
-    box-shadow:
-      inset 3px 3px 6px rgba(0, 0, 0, 0.5),
-      inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+  .btn:active {
     transform: scale(0.98);
+  }
+
+  /* Primary action — solid accent fill with a hover shine sweep */
+  .btn-primary {
+    position: relative;
+    overflow: hidden;
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+    filter: brightness(0.94);
+  }
+  .btn-primary::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.6s ease;
+  }
+  .btn-primary:hover::after {
+    left: 125%;
+  }
+
+  /* Small tag/badge surface */
+  .pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
   }
 
   .font-mono-data {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
   }
 }
-  /* Pill-shaped neumorphic surface — for tags/badges that aren't full cards */
-  .neu-pill {
-    background: var(--bg-base);
-    border-radius: 999px;
-    box-shadow:
-      5px 5px 10px rgba(0, 0, 0, 0.5),
-      -5px -5px 10px rgba(255, 255, 255, 0.03);
-  }
-
-  /* Primary action — neumorphic but tinted with accent in the light-shadow,
-     so it reads as "the important one" without breaking the soft aesthetic */
-  .neu-accent {
-    background: var(--bg-base);
-    color: var(--accent);
-    border-radius: 14px;
-    box-shadow:
-      6px 6px 14px rgba(0, 0, 0, 0.6),
-      -6px -6px 14px rgba(74, 158, 255, 0.08);
-    transition: box-shadow 0.15s ease, transform 0.1s ease;
-  }
-  .neu-accent:hover {
-    box-shadow:
-      8px 8px 18px rgba(0, 0, 0, 0.65),
-      -8px -8px 18px rgba(74, 158, 255, 0.14);
-  }
-  .neu-accent:active {
-    box-shadow:
-      inset 3px 3px 6px rgba(0, 0, 0, 0.5),
-      inset -3px -3px 6px rgba(45, 212, 191, 0.06);
-    transform: scale(0.98);
-  }

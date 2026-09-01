@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(python \"C:/Users/GODX/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.13.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"internal dashboard admin tool government infrastructure dark minimal professional\" --domain style -n 8)",
+      "Bash(sed -i 's/max-w-6xl mx-auto px-6 py-8 space-y-6/max-w-6xl mx-auto px-6 py-6 space-y-5/' app/work-orders/page.tsx)",
+      "Bash(sed -i 's/max-w-2xl mx-auto px-6 py-8 space-y-6 animate-pulse/max-w-2xl mx-auto px-6 py-6 space-y-5 animate-pulse/' \"app/work-orders/[id]/page.tsx\")",
+      "Bash(sed -i '0,/max-w-2xl mx-auto px-6 py-8\"/s//max-w-2xl mx-auto px-6 py-6\"/' \"app/work-orders/[id]/page.tsx\")",
+      "Bash(sed -i 's/max-w-2xl mx-auto px-6 py-8 space-y-5/max-w-2xl mx-auto px-6 py-6 space-y-4/' \"app/work-orders/[id]/page.tsx\")",
+      "Bash(sed -i 's/<div className=\"space-y-8\">/<div className=\"space-y-6\">/' components/work-orders/WorkOrderForm.tsx)",
+      "Bash(sed -i 's/surface !rounded-2xl overflow-hidden/surface overflow-hidden/' \"app/work-orders/[id]/page.tsx\")",
+      "Bash(sed -i 's/surface overflow-hidden !rounded-2xl/surface overflow-hidden/' app/work-orders/page.tsx)"
     ]
   }
 }

@@ -14,7 +14,7 @@ export default function NewWorkOrderPage() {
   const [conflictResults, setConflictResults] = useState<ConflictCheckResponse | undefined>();
 
   return (
-    <div className="flex h-[calc(100vh-80px)] w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
 
       {/* LEFT SIDE: The Map */}
       <div className="w-2/3 h-full relative border-r border-[var(--border)] p-4">

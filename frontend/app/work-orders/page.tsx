@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { STATUS_COLORS } from "@/lib/theme";
 import type { WorkOrderResponse, WorkOrderStatus } from "@/lib/types";
+import { Plus, TriangleAlert, ClipboardList } from "lucide-react";
 
 const STATUS_LABELS: Record<WorkOrderStatus, string> = {
   pending:      "Pending",
@@ -83,7 +84,7 @@ export default function WorkOrdersListPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
         {/* Page header */}
         <div className="flex items-center justify-between">
           <div>
@@ -94,9 +95,9 @@ export default function WorkOrdersListPage() {
           </div>
           <Link
             href="/work-orders/new"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--bg-base)] text-sm font-semibold shadow-lg shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 hover:brightness-110 transition-all"
+            className="flex items-center gap-2 px-4 py-2 btn-primary text-sm font-semibold"
           >
-            <span>+</span> New Request
+            <Plus className="w-4 h-4" /> New Request
           </Link>
         </div>
 
@@ -108,7 +109,7 @@ export default function WorkOrdersListPage() {
           <select
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
-            className="bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+            className="surface-sunken text-[var(--text-primary)] text-sm px-3 py-1.5 outline-none"
           >
             {ALL_DEPTS.map((d) => (
               <option key={d} value={d} className="bg-[var(--surface)]">
@@ -126,7 +127,7 @@ export default function WorkOrdersListPage() {
         {/* Error state */}
         {error && (
           <div className="rounded-xl border border-red-500/30 bg-red-500/8 p-5 flex items-start gap-3">
-            <span className="text-2xl">⚠️</span>
+            <TriangleAlert className="w-6 h-6 text-red-400 flex-none" />
             <div>
               <p className="text-sm font-semibold text-red-400">Could not load work orders</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">{error}</p>
@@ -149,10 +150,10 @@ export default function WorkOrdersListPage() {
 
         {/* Table */}
         {!error && (
-          <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+          <div className="surface overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-[var(--bg-base)] border-b border-[var(--border)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="px-4 py-3 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                     Work Order
                   </th>
@@ -176,10 +177,10 @@ export default function WorkOrdersListPage() {
                       <tr
                         key={o.id}
                         onClick={() => router.push(`/work-orders/${o.id}`)}
-                        className="cursor-pointer hover:bg-white/[0.03] transition-colors group"
+                        className="cursor-pointer hover:bg-[var(--surface-hover)] transition-colors group"
                       >
                         <td className="px-4 py-3.5">
-                          <p className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-white transition-colors">
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
                             {o.title}
                           </p>
                           <p className="text-xs text-[var(--text-muted)] mt-0.5 font-mono-data">
@@ -187,14 +188,7 @@ export default function WorkOrdersListPage() {
                           </p>
                         </td>
                         <td className="px-4 py-3.5 hidden sm:table-cell">
-                          <span
-                            className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                            style={{
-                              backgroundColor: "rgba(45, 212, 191, 0.12)",
-                              color: "var(--accent)",
-                              border: "1px solid rgba(45, 212, 191, 0.3)",
-                            }}
-                          >
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full text-[var(--accent)] pill">
                             {DEPT_LABELS[o.requesting_dept_slug] ?? o.requesting_dept_slug}
                           </span>
                         </td>
@@ -215,7 +209,7 @@ export default function WorkOrdersListPage() {
             {/* Empty state */}
             {!loading && !error && filtered.length === 0 && (
               <div className="text-center py-16 px-6">
-                <div className="text-5xl mb-4">📋</div>
+                <ClipboardList className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
                 <h3 className="text-base font-semibold text-[var(--text-primary)]">
                   {deptFilter === "all" ? "No work orders yet" : `No orders for ${DEPT_LABELS[deptFilter] ?? deptFilter}`}
                 </h3>
@@ -226,9 +220,9 @@ export default function WorkOrdersListPage() {
                 </p>
                 <Link
                   href="/work-orders/new"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-[var(--bg-base)] text-sm font-semibold rounded-lg hover:brightness-110 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 btn-primary text-sm font-semibold"
                 >
-                  + Create Work Order
+                  <Plus className="w-4 h-4" /> Create Work Order
                 </Link>
               </div>
             )}

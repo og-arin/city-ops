@@ -56,7 +56,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
           <ClipboardList className="w-5 h-5 text-[var(--accent)]" />
@@ -90,7 +90,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Water Main Repair — FC Road Sector 4"
-            className="w-full neu-pressed p-2.5 text-sm text-[var(--text-primary)] outline-none"
+            className="w-full surface-sunken p-2.5 text-sm text-[var(--text-primary)] outline-none"
           />
         </div>
 
@@ -99,7 +99,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
           <select
             value={dept}
             onChange={(e) => setDept(e.target.value)}
-            className="w-full neu-pressed p-2.5 text-sm text-[var(--text-primary)] outline-none"
+            className="w-full surface-sunken p-2.5 text-sm text-[var(--text-primary)] outline-none"
           >
             {DEPTS.map((d) => (
               <option key={d.slug} value={d.slug} className="bg-[var(--surface)]">
@@ -116,7 +116,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full neu-pressed p-2.5 text-sm text-[var(--text-primary)] outline-none"
+              className="w-full surface-sunken p-2.5 text-sm text-[var(--text-primary)] outline-none"
             />
           </div>
           <div className="space-y-1">
@@ -125,7 +125,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full neu-pressed p-2.5 text-sm text-[var(--text-primary)] outline-none"
+              className="w-full surface-sunken p-2.5 text-sm text-[var(--text-primary)] outline-none"
             />
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
 
       <div className="pt-4 border-t border-[var(--border)] space-y-4">
         {!polygon && (
-          <div className="flex items-start gap-2 neu p-3">
+          <div className="flex items-start gap-2 surface p-3">
             <TriangleAlert className="w-4 h-4 mt-0.5 text-orange-400 flex-none" />
             <p className="text-xs text-orange-300">
               Draw the work area on the map before submitting. The submit button will unlock once a polygon is placed.
@@ -142,7 +142,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
         )}
 
         {error && (
-          <div className="flex items-start gap-2 neu p-3">
+          <div className="flex items-start gap-2 surface p-3">
             <TriangleAlert className="w-4 h-4 mt-0.5 text-red-400 flex-none" />
             <p className="text-xs text-red-300">{error}</p>
           </div>
@@ -151,7 +151,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
         <div className="flex gap-3">
           <Link
             href="/dashboard"
-            className="px-6 py-2.5 neu-button text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm font-semibold"
+            className="px-6 py-2.5 btn text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm font-semibold"
           >
             Cancel
           </Link>
@@ -159,7 +159,7 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
             onClick={handleSubmit}
             disabled={!canSubmit}
             className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 ${
-              canSubmit ? "neu-accent" : "neu-pressed text-[var(--text-muted)] cursor-not-allowed"
+              canSubmit ? "btn-primary" : "surface-sunken text-[var(--text-muted)] cursor-not-allowed"
             }`}
           >
             <Send className="w-4 h-4" />
