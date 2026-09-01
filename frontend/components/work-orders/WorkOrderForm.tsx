@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { ConflictCheckResponse } from "@/lib/types";
 import ConflictAlert from "./ConflictAlert";
-import { ClipboardList, Send, TriangleAlert } from "lucide-react";
+import { ClipboardList, Send, TriangleAlert, Sparkles, CheckCircle2 } from "lucide-react";
 
 const DEPTS = [
   { slug: "road", label: "Road" },
@@ -23,23 +22,43 @@ interface WorkOrderFormProps {
   polygon: GeoJSON.Polygon | null;
   conflictResults?: ConflictCheckResponse;
   isChecking: boolean;
+  onAutoAudit?: (query: string) => void;
+  onReset?: () => void;
 }
 
-export default function WorkOrderForm({ polygon, conflictResults, isChecking }: WorkOrderFormProps) {
-  const router = useRouter();
+export default function WorkOrderForm({
+  polygon,
+  conflictResults,
+  isChecking,
+  onAutoAudit,
+  onReset,
+}: WorkOrderFormProps) {
   const [title, setTitle] = useState("");
   const [dept, setDept] = useState(DEPTS[0].slug);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const canSubmit = !!polygon && !!title.trim() && !!startDate && !!endDate && !submitting;
+
+  const conflicts = conflictResults?.conflicts ?? [];
+  const hasConflicts = conflicts.length > 0;
+
+  const handleAutoAudit = () => {
+    if (!onAutoAudit || !hasConflicts) return;
+    const depts = Array.from(new Set(conflicts.map((c) => c.owner_dept_slug)));
+    const deptList = depts.join(" and ");
+    const query = `Work planned intersecting ${deptList}. Summarize mandatory pre-excavation notices, deposit requirements, and trench refilling rules.`;
+    onAutoAudit(query);
+  };
 
   const handleSubmit = async () => {
     if (!polygon || !title.trim() || !startDate || !endDate) return;
     setSubmitting(true);
     setError(null);
+    setSuccessMsg(null);
     try {
       const order = await api.createWorkOrder({
         title: title.trim(),
@@ -48,7 +67,17 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
         start_date: `${startDate}T00:00:00Z`,
         end_date: `${endDate}T00:00:00Z`,
       });
-      router.push(`/work-orders/${order.id}`);
+      // Success — show toast and reset
+      setSuccessMsg(`Work Order #${order.id} created successfully!`);
+      setTitle("");
+      setDept(DEPTS[0].slug);
+      setStartDate("");
+      setEndDate("");
+      setSubmitting(false);
+      // Reset polygon + conflicts from parent
+      if (onReset) onReset();
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit work order.");
       setSubmitting(false);
@@ -72,10 +101,21 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
           Live Conflict Detection
         </p>
         <ConflictAlert
-          conflicts={conflictResults?.conflicts ?? []}
+          conflicts={conflicts}
           hasPolygon={!!polygon}
           checking={isChecking}
         />
+
+        {/* Auto-Audit Compliance Button — only visible when conflicts exist */}
+        {hasConflicts && onAutoAudit && (
+          <button
+            onClick={handleAutoAudit}
+            className="w-full mt-2 flex items-center justify-center gap-2 py-2 px-4 text-xs font-semibold rounded-xl bg-violet-500/10 text-violet-300 border border-violet-500/25 hover:bg-violet-500/20 transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Auto-Audit Compliance
+          </button>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -132,6 +172,14 @@ export default function WorkOrderForm({ polygon, conflictResults, isChecking }: 
       </div>
 
       <div className="pt-4 border-t border-[var(--border)] space-y-4">
+        {/* Success toast */}
+        {successMsg && (
+          <div className="flex items-center gap-2 neu p-3 border border-emerald-500/30 bg-emerald-500/5 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-none" />
+            <p className="text-xs text-emerald-300 font-medium">{successMsg}</p>
+          </div>
+        )}
+
         {!polygon && (
           <div className="flex items-start gap-2 neu p-3">
             <TriangleAlert className="w-4 h-4 mt-0.5 text-orange-400 flex-none" />

@@ -90,9 +90,9 @@ export const api = {
     ),
 
   // --- RAG ---
-  askRAG: (question: string) =>
-    request<RAGQueryResponse>("/rag/query", {
+  askRAG: (query: string) =>
+    request<{ answer: string }>("/rag/ask", {
       method: "POST",
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ query }),
     }),
 };
