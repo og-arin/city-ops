@@ -4,10 +4,9 @@ import type { Layer } from "@/lib/types";
 import { LAYER_COLORS } from "@/lib/theme";
 
 const LAYER_META: Record<Layer, { label: string; icon: string }> = {
+  ward:     { label: "Administrative Wards", icon: "🏢" },
   road:     { label: "Roads",       icon: "🛣️" },
-  water:    { label: "Water Pipes", icon: "💧" },
-  electric: { label: "Electric",    icon: "⚡" },
-  telecom:  { label: "Telecom",     icon: "📡" },
+  drainage: { label: "Drainage",    icon: "🌊" },
 };
 
 interface LayerToggleProps {

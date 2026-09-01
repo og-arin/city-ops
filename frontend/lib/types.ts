@@ -2,7 +2,7 @@
 // If a field changes on one side, change it here in the same commit.
 
 export type Severity = "red" | "yellow";
-export type Layer = "road" | "water" | "electric" | "telecom";
+export type Layer = "road" | "drainage" | "ward";
 
 export interface ConflictItem {
   asset_id: number;

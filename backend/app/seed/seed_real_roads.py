@@ -1,9 +1,16 @@
 """
 Run with: python -m app.seed.seed_data
+
+Reads real GIS data and seeds the DB:
+  - roads: Real OSM network (motorway, primary, secondary, residential) -> LineStrings
+  - drainage: real Swachh Bharat Mission stormwater data (geojson, used as-is)
+  - telecom: synthetic fiber layer (geojson, used as-is, clearly labeled)
+  - water: SKIPPED for now.
 """
 import os
 import requests
 import json
+import pandas as pd
 from shapely.geometry import shape, LineString
 from geoalchemy2.shape import from_shape
 
@@ -12,13 +19,19 @@ from app.models.infrastructure import InfrastructureAsset
 from app.models.department import Department
 
 GEOMAP_DIR = os.path.join(os.path.dirname(__file__), "../../data/geomap")
-WARDS_FILE = os.path.join(GEOMAP_DIR, "pune-admin-wards.geojson")
+DRAINAGE_FILE = os.path.join(GEOMAP_DIR, "drainage_system_combined.geojson")
+TELECOM_FILE = os.path.join(GEOMAP_DIR, "synthetic_telecom_fiber.geojson")
 
-# Added Municipal Corporation back for the Wards
 DEPARTMENTS = [
+    ("Water Department", "water"),
+    ("Electricity Department", "electric"),
     ("Road Department", "road"),
-    ("Drainage Department", "drainage"),
+    ("Traffic Police", "traffic"),
+    ("Waste Management", "waste"),
     ("Municipal Corporation", "municipal"),
+    ("Telecom", "telecom"),
+    ("Emergency Services", "emergency"),
+    ("Drainage Department", "drainage"),
 ]
 
 def seed_departments(db):
@@ -28,7 +41,8 @@ def seed_departments(db):
     db.commit()
     print(f"Departments ready: {len(DEPARTMENTS)}")
 
-def build_osm_features():
+def build_road_features():
+    """Download actual drivable roads from OpenStreetMap and convert to LineStrings."""
     print("🌍 Requesting OPTIMIZED road network for Pune from OpenStreetMap...")
     overpass_url = "https://lz4.overpass-api.de/api/interpreter"
     overpass_query = """
@@ -53,17 +67,18 @@ def build_osm_features():
         if element["type"] == "way" and "geometry" in element:
             coords = [(node["lon"], node["lat"]) for node in element["geometry"]]
             if len(coords) > 1:
+                # OSM provides street names, fallback to "Unnamed Road"
                 name = element.get("tags", {}).get("name", "Unnamed Road")
                 features.append({
                     "geom": LineString(coords),
-                    "name": name
+                    "name": name,
+                    "owner_dept_slug": "road",
                 })
 
-    print(f"✅ Downloaded {len(features)} actual OSM road segments")
+    print(f"Roads: {len(features)} actual OSM road segments loaded")
     return features
 
-# We brought this function back to read the Wards file!
-def load_geojson_features(path, layer_name, dept_slug):
+def load_geojson_features(path, layer_name):
     if not os.path.exists(path):
         print(f"  skip {layer_name} (file not found: {path})")
         return []
@@ -78,16 +93,14 @@ def load_geojson_features(path, layer_name, dept_slug):
         except Exception:
             continue
         props = feat.get("properties", {})
-        # Look for 'name' or 'ward_name'
-        name = props.get("name") or props.get("ward_name") or f"{layer_name}-unnamed"
+        name = props.get("name") or props.get("route") or f"{layer_name}-unnamed"
         features.append({
             "geom": geom,
             "name": name,
-            "layer": layer_name,
-            "owner_dept_slug": dept_slug,
+            "owner_dept_slug": layer_name,
         })
 
-    print(f"✅ {layer_name.capitalize()}: {len(features)} real features loaded")
+    print(f"{layer_name.capitalize()}: {len(features)} features loaded")
     return features
 
 def seed_infrastructure(db):
@@ -95,22 +108,10 @@ def seed_infrastructure(db):
     db.query(InfrastructureAsset).delete()
     db.commit()
 
-    real_osm_data = build_osm_features()
     all_features = []
-    
-    print("🛣️ Building Road layer from OSM...")
-    all_features += [{
-        "geom": f["geom"], "name": f["name"], "layer": "road", "owner_dept_slug": "road"
-    } for f in real_osm_data]
-    
-    print("💧 Building realistic Drainage layer from OSM...")
-    all_features += [{
-        "geom": f["geom"], "name": f["name"] + " (Storm Drain)", "layer": "drainage", "owner_dept_slug": "drainage"
-    } for f in real_osm_data]
-
-    print("🏢 Loading Pune Admin Wards...")
-    # Loading the real polygons!
-    all_features += load_geojson_features(WARDS_FILE, "ward", "municipal")
+    all_features += [{**f, "layer": "road"} for f in build_road_features()]
+    all_features += [{**f, "layer": "drainage"} for f in load_geojson_features(DRAINAGE_FILE, "drainage")]
+    all_features += [{**f, "layer": "telecom"} for f in load_geojson_features(TELECOM_FILE, "telecom")]
 
     print("🚀 Uploading geometries via GeoAlchemy2...")
     for f in all_features:
@@ -123,7 +124,7 @@ def seed_infrastructure(db):
         ))
 
     db.commit()
-    print(f"🎉 Real Infrastructure assets successfully seeded: {len(all_features)}")
+    print(f"🎉 Infrastructure assets successfully seeded: {len(all_features)}")
 
 if __name__ == "__main__":
     init_postgis()

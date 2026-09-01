@@ -10,11 +10,10 @@ import type { Layer, InfrastructureFeatureCollection } from "@/lib/types";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
-const LAYER_CONFIG: Record<Layer, { color: string; width: number; dashed?: boolean }> = {
-  road:     { color: "#64748b", width: 4 },
-  water:    { color: "#0284c7", width: 3 },
-  electric: { color: "#f59e0b", width: 3, dashed: true },
-  telecom:  { color: "#9333ea", width: 3 },
+const LAYER_CONFIG: Record<Layer, { color: string; width?: number; dashed?: boolean; type?: "line" | "fill" }> = {
+  ward: { color: "#8b5cf6", type: "fill" },
+  road: { color: "#64748b", width: 4 },
+  drainage: { color: "#0d9488", width: 3 },
 };
 
 interface MapViewProps {
@@ -28,7 +27,7 @@ interface MapViewProps {
 export default function MapView({
   center = [73.8567, 18.5204],
   zoom = 14,
-  activeLayers = ["road", "water", "electric", "telecom"],
+  activeLayers = ["ward", "road", "drainage"],
   children,
   onMapReady,
 }: MapViewProps) {
@@ -68,45 +67,51 @@ export default function MapView({
     if (!isMapLoaded || !mapRef.current) return;
     const map = mapRef.current;
 
-    (Object.keys(LAYER_CONFIG) as Layer[]).forEach(async (layer) => {
-      const sourceId = `infra-${layer}`;
-      if (map.getSource(sourceId)) return; // Prevent double-fetching
+    const loadLayers = async () => {
+      for (const layer of Object.keys(LAYER_CONFIG) as Layer[]) {
+        const sourceId = `infra-${layer}`;
+        if (map.getSource(sourceId)) continue; // Prevent double-fetching
 
-      try {
-        const data = await api.getInfrastructure(layer);
-        
-        // Safety checks after the async await
-        if (!mapRef.current || !mapRef.current.isStyleLoaded()) return;
-        if (mapRef.current.getSource(sourceId)) return;
+        try {
+          const data = await api.getInfrastructure(layer);
 
-        mapRef.current.addSource(sourceId, { type: "geojson", data: data as any });
+          // Safety checks after the async await
+          if (!mapRef.current || !mapRef.current.isStyleLoaded()) continue;
+          if (mapRef.current.getSource(sourceId)) continue;
 
-        const cfg = LAYER_CONFIG[layer];
-        const paintProps: any = {
-          "line-color": cfg.color,
-          "line-width": cfg.width,
-          "line-opacity": 0.9,
-        };
-        
-        if (cfg.dashed) {
-          paintProps["line-dasharray"] = [4, 2];
+          mapRef.current.addSource(sourceId, { type: "geojson", data: data as any });
+
+          const cfg = LAYER_CONFIG[layer];
+          const isFill = cfg.type === "fill";
+
+          mapRef.current.addLayer({
+            id: sourceId,
+            type: isFill ? "fill" : "line",
+            source: sourceId,
+            layout: {
+              visibility: activeLayers.includes(layer) ? "visible" : "none",
+              ...(isFill ? {} : { "line-cap": "round", "line-join": "round" }),
+            },
+            paint: isFill 
+              ? {
+                  "fill-color": cfg.color,
+                  "fill-opacity": 0.15,
+                  "fill-outline-color": "#ffffff",
+                }
+              : {
+                  "line-color": cfg.color,
+                  "line-width": cfg.width || 3,
+                  "line-opacity": 0.9,
+                  ...(cfg.dashed ? { "line-dasharray": [4, 2] } : {}),
+                },
+          });
+        } catch (err) {
+          console.error(`Failed to load layer "${layer}":`, err);
         }
-
-        mapRef.current.addLayer({
-          id: sourceId,
-          type: "line",
-          source: sourceId,
-          layout: {
-            visibility: activeLayers.includes(layer) ? "visible" : "none",
-            "line-cap": "round",
-            "line-join": "round",
-          },
-          paint: paintProps,
-        });
-      } catch (err) {
-        console.error(`Failed to load layer "${layer}":`, err);
       }
-    });
+    };
+    
+    loadLayers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapLoaded]);
 
@@ -114,7 +119,7 @@ export default function MapView({
   useEffect(() => {
     if (!isMapLoaded || !mapRef.current) return;
     const map = mapRef.current;
-    
+
     (Object.keys(LAYER_CONFIG) as Layer[]).forEach((layer) => {
       const id = `infra-${layer}`;
       if (map.getLayer(id)) {

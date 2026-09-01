@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { TOKENS } from "@/lib/theme";
 
 interface Stats {
   activeAssets: number;
@@ -126,10 +125,9 @@ export default function LandingPage() {
         {/* Feature pills */}
         <div className="flex flex-wrap justify-center gap-2">
           {[
+            "🏢 Administrative Wards",
             "🛣️ Road Network",
-            "💧 Water Pipes",
-            "⚡ Electric Cables",
-            "📡 Telecom Ducts",
+            "🌊 Drainage",
           ].map((feat) => (
             <span
               key={feat}
