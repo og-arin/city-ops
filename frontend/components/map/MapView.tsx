@@ -10,10 +10,10 @@ import type { Layer, InfrastructureFeatureCollection } from "@/lib/types";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
-const LAYER_CONFIG: Record<Layer, { color: string; width?: number; dashed?: boolean; type?: "line" | "fill" }> = {
+const LAYER_CONFIG: Record<Layer, { color: string; width?: number; dashed?: boolean; type?: "line" | "fill"; offset?: number }> = {
   ward: { color: "#8b5cf6", type: "fill" },
-  road: { color: "#64748b", width: 4 },
-  drainage: { color: "#0d9488", width: 3 },
+  road: { color: "#64748b", width: 6 },
+  drainage: { color: "#00FFCC", width: 3, dashed: true, offset: 4 },
 };
 
 interface MapViewProps {
@@ -102,7 +102,8 @@ export default function MapView({
                   "line-color": cfg.color,
                   "line-width": cfg.width || 3,
                   "line-opacity": 0.9,
-                  ...(cfg.dashed ? { "line-dasharray": [4, 2] } : {}),
+                  ...(cfg.offset ? { "line-offset": cfg.offset } : {}),
+                  ...(cfg.dashed ? { "line-dasharray": [2, 2] } : {}),
                 },
           });
         } catch (err) {

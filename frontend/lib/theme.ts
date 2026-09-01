@@ -6,7 +6,7 @@ import type { Layer, WorkOrderStatus, Severity } from "./types";
 
 export const LAYER_COLORS: Record<Layer, string> = {
   road: "#9AA3B2",
-  drainage: "#0d9488", // Deep blue/teal
+  drainage: "#00FFCC", // High-contrast bright cyan
   ward: "#8b5cf6",
 } as const;
 
