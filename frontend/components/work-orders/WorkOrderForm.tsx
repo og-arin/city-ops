@@ -10,12 +10,9 @@ import { ClipboardList, Send, TriangleAlert, Sparkles, CheckCircle2 } from "luci
 const DEPTS = [
   { slug: "road", label: "Road" },
   { slug: "water", label: "Water" },
+  { slug: "drainage", label: "Drainage" },
   { slug: "electric", label: "Electric" },
   { slug: "telecom", label: "Telecom" },
-  { slug: "traffic", label: "Traffic" },
-  { slug: "waste", label: "Waste" },
-  { slug: "municipal", label: "Municipal" },
-  { slug: "emergency", label: "Emergency" },
 ];
 
 interface WorkOrderFormProps {

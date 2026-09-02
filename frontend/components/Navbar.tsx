@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2 } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -62,7 +61,6 @@ export default function Navbar() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Spatial Engine Active
           </div>
-          <ThemeToggle />
         </div>
       </nav>
     </header>

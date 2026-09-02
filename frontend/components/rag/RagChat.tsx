@@ -9,12 +9,6 @@ interface ChatMessage {
   content: string;
 }
 
-const QUICK_CHIPS = [
-  "Monsoon excavation ban dates?",
-  "Standard trench refilling process?",
-  "Penalty for damaged utilities?",
-];
-
 export interface RagChatHandle {
   sendQuery: (query: string) => void;
 }
@@ -62,10 +56,6 @@ const RagChat = forwardRef<RagChatHandle>(function RagChat(_, ref) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     doSend(query);
-  };
-
-  const handleChipClick = (chip: string) => {
-    doSend(chip);
   };
 
   return (
@@ -117,20 +107,6 @@ const RagChat = forwardRef<RagChatHandle>(function RagChat(_, ref) {
             <span>Consulting regulations...</span>
           </div>
         )}
-      </div>
-
-      {/* Quick Chips */}
-      <div className="flex flex-wrap gap-1.5">
-        {QUICK_CHIPS.map((chip) => (
-          <button
-            key={chip}
-            onClick={() => handleChipClick(chip)}
-            disabled={loading}
-            className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {chip}
-          </button>
-        ))}
       </div>
 
       {/* Input */}
