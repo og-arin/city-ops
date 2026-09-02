@@ -25,6 +25,7 @@ export type WorkOrderStatus =
 
 export interface CoDigOpportunity {
   work_order_id: number;
+  title: string;
   department: string;
 }
 

@@ -205,10 +205,10 @@ export default function WorkOrdersListPage() {
                                 {o.co_dig_opportunities.map((opp, idx) => (
                                   <span 
                                     key={idx} 
-                                    className="text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/20 whitespace-nowrap cursor-help"
+                                    className="text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/20 whitespace-nowrap cursor-help flex items-center gap-1"
                                     title={`Coordinate trenching with ${DEPT_LABELS[opp.department] ?? opp.department} to prevent duplicate excavation.`}
                                   >
-                                    Co-Dig: {DEPT_LABELS[opp.department] ?? opp.department}
+                                    <span>🤝</span> Co-Dig Match
                                   </span>
                                 ))}
                               </div>

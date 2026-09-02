@@ -166,8 +166,36 @@ export default function WorkOrderDetailPage() {
           </div>
         </div>
 
+        {/* Coordination Opportunities */}
+        {order!.co_dig_opportunities && order!.co_dig_opportunities.length > 0 && (
+          <div className="space-y-3 pt-2">
+            <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <span className="text-lg">🤝</span> Coordination Opportunities (Dig Once)
+            </h2>
+            <div className="flex flex-col gap-3">
+              {order!.co_dig_opportunities.map((opp, idx) => (
+                <div key={idx} className="surface p-4 flex items-center justify-between gap-4 border border-blue-500/20 bg-blue-500/5 rounded-xl">
+                  <div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+                      {DEPT_LABELS[opp.department] ?? opp.department}
+                    </span>
+                    <h3 className="text-sm font-semibold text-[var(--text-primary)] mt-1.5">{opp.title}</h3>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">Work Order #{opp.work_order_id}</p>
+                  </div>
+                  <button 
+                    onClick={() => alert(`Initiating joint trenching with ${DEPT_LABELS[opp.department] ?? opp.department}...`)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors flex-none"
+                  >
+                    Initiate Joint Trenching
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Conflicts section */}
-        <div className="space-y-2">
+        <div className="space-y-2 pt-2">
           <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
             Infrastructure Conflicts ({order!.conflicts.length})
           </p>

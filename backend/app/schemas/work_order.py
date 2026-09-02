@@ -26,6 +26,7 @@ class ConflictItem(BaseModel):
 
 class CoDigOpportunity(BaseModel):
     work_order_id: int
+    title: str
     department: str
 
 

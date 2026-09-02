@@ -55,12 +55,12 @@ def _get_co_dig_opportunities(db: Session, wo: WorkOrder) -> list[dict]:
         WorkOrder.requesting_dept_slug != wo.requesting_dept_slug,
         WorkOrder.status.in_(active_statuses),
         func.ST_Intersects(WorkOrder.polygon, wo.polygon),
-        WorkOrder.start_date <= (wo.end_date + timedelta(days=30)),
-        WorkOrder.end_date >= (wo.start_date - timedelta(days=30))
+        WorkOrder.start_date <= (wo.end_date + timedelta(days=90)),
+        WorkOrder.end_date >= (wo.start_date - timedelta(days=90))
     ).all()
     
     return [
-        {"work_order_id": o.id, "department": o.requesting_dept_slug}
+        {"work_order_id": o.id, "title": o.title, "department": o.requesting_dept_slug}
         for o in overlaps
     ]
 
