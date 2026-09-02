@@ -5,7 +5,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.routers import work_orders, infrastructure, conflicts, rag
+from app.routers import work_orders, infrastructure, conflicts, rag, stats
 from app.services.rag_engine import ingest_documents
 
 @asynccontextmanager
@@ -39,6 +39,7 @@ app.include_router(work_orders.router)
 app.include_router(infrastructure.router)
 app.include_router(conflicts.router)
 app.include_router(rag.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")

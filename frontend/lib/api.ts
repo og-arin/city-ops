@@ -109,4 +109,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ query }),
     }),
+
+  // --- Stats ---
+  getStats: () =>
+    request<{ active_assets: number; departments_coordinating: number; live_conflicts: number }>("/stats"),
 };

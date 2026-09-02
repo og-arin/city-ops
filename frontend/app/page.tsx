@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import CountUp from "react-countup";
 import { api } from "@/lib/api";
 import MapView from "@/components/map/MapView";
 import {
@@ -53,34 +54,14 @@ export default function LandingPage() {
 
     async function fetchStats() {
       try {
-        const [infra, orders] = await Promise.allSettled([
-          api.getInfrastructure(),
-          api.listWorkOrders(),
-        ]);
+        const statsData = await api.getStats();
 
         if (cancelled) return;
 
-        const activeAssets =
-          infra.status === "fulfilled" ? infra.value.features.length : 0;
-
-        let deptsCoordinating = 0;
-        let liveConflicts = 0;
-        if (orders.status === "fulfilled") {
-          const coordinating = orders.value.filter(
-            (o) => o.status === "coordinating"
-          );
-          deptsCoordinating = new Set(
-            coordinating.map((o) => o.requesting_dept_slug)
-          ).size;
-          liveConflicts = orders.value.filter(
-            (o) => o.status === "conflict"
-          ).length;
-        }
-
         setStats({
-          activeAssets,
-          deptsCoordinating,
-          liveConflicts,
+          activeAssets: statsData.active_assets,
+          deptsCoordinating: statsData.departments_coordinating,
+          liveConflicts: statsData.live_conflicts,
           totalDepts: 8,
         });
       } catch {
@@ -141,7 +122,11 @@ export default function LandingPage() {
                   loaded ? "opacity-100" : "opacity-30"
                 }`}
               >
-                {stats[key]}
+                {loaded ? (
+                  <CountUp end={stats[key]} separator="," duration={2.5} useEasing={true} />
+                ) : (
+                  "0"
+                )}
               </p>
               <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider leading-tight">
                 {label}
