@@ -12,7 +12,13 @@ from app.core.db import get_db
 from app.models.work_order import WorkOrder, WorkOrderStatus, ConflictLog
 from app.models.department import Department
 from app.models.infrastructure import InfrastructureAsset
-from app.schemas.work_order import WorkOrderCreate, WorkOrderResponse, AcknowledgeConflictRequest
+from app.schemas.work_order import (
+    WorkOrderCreate,
+    WorkOrderResponse,
+    AcknowledgeConflictRequest,
+    ProposeJointTrenchRequest,
+    RespondJointTrenchRequest,
+)
 from app.services.spatial import check_conflicts
 from app.services.notifications import notify_conflict
 
@@ -60,7 +66,13 @@ def _get_co_dig_opportunities(db: Session, wo: WorkOrder) -> list[dict]:
     ).all()
     
     return [
-        {"work_order_id": o.id, "title": o.title, "department": o.requesting_dept_slug}
+        {
+            "work_order_id": o.id, 
+            "title": o.title, 
+            "department": o.requesting_dept_slug,
+            "target_start_date": o.start_date,
+            "target_end_date": o.end_date
+        }
         for o in overlaps
     ]
 
@@ -124,6 +136,11 @@ def create_work_order(payload: WorkOrderCreate, db: Session = Depends(get_db)):
         created_at=work_order.created_at,
         conflicts=_serialize_conflicts(db, work_order.id) if conflicts else [],
         co_dig_opportunities=_get_co_dig_opportunities(db, work_order),
+        joint_trench_status=work_order.joint_trench_status,
+        initiator_work_order_id=work_order.initiator_work_order_id,
+        linked_work_order_id=work_order.linked_work_order_id,
+        proposed_joint_start_date=work_order.proposed_joint_start_date,
+        proposed_joint_end_date=work_order.proposed_joint_end_date,
     )
 
 
@@ -136,6 +153,11 @@ def list_work_orders(db: Session = Depends(get_db)):
             status=o.status.value, start_date=o.start_date, end_date=o.end_date,
             created_at=o.created_at, conflicts=_serialize_conflicts(db, o.id),
             co_dig_opportunities=_get_co_dig_opportunities(db, o),
+            joint_trench_status=o.joint_trench_status,
+            initiator_work_order_id=o.initiator_work_order_id,
+            linked_work_order_id=o.linked_work_order_id,
+            proposed_joint_start_date=o.proposed_joint_start_date,
+            proposed_joint_end_date=o.proposed_joint_end_date,
         ) for o in orders
     ]
 
@@ -150,6 +172,11 @@ def get_work_order(work_order_id: int, db: Session = Depends(get_db)):
         status=o.status.value, start_date=o.start_date, end_date=o.end_date,
         created_at=o.created_at, conflicts=_serialize_conflicts(db, o.id),
         co_dig_opportunities=_get_co_dig_opportunities(db, o),
+        joint_trench_status=o.joint_trench_status,
+        initiator_work_order_id=o.initiator_work_order_id,
+        linked_work_order_id=o.linked_work_order_id,
+        proposed_joint_start_date=o.proposed_joint_start_date,
+        proposed_joint_end_date=o.proposed_joint_end_date,
     )
 
 
@@ -179,3 +206,77 @@ def acknowledge_conflict(payload: AcknowledgeConflictRequest, db: Session = Depe
         db.commit()
 
     return {"ok": True, "remaining_unacknowledged": remaining}
+
+
+@router.post("/{work_order_id}/propose-joint")
+def propose_joint_trenching(
+    work_order_id: int,
+    payload: ProposeJointTrenchRequest,
+    db: Session = Depends(get_db)
+):
+    source_wo = db.query(WorkOrder).filter(WorkOrder.id == work_order_id).first()
+    if not source_wo:
+        raise HTTPException(status_code=404, detail="Source work order not found")
+
+    target_wo = db.query(WorkOrder).filter(WorkOrder.id == payload.target_work_order_id).first()
+    if not target_wo:
+        raise HTTPException(status_code=404, detail="Target work order not found")
+
+    # Update both
+    source_wo.joint_trench_status = "proposed"
+    source_wo.initiator_work_order_id = source_wo.id
+    source_wo.linked_work_order_id = target_wo.id
+    source_wo.proposed_joint_start_date = payload.proposed_start_date
+    source_wo.proposed_joint_end_date = payload.proposed_end_date
+
+    target_wo.joint_trench_status = "proposed"
+    target_wo.initiator_work_order_id = source_wo.id
+    target_wo.linked_work_order_id = source_wo.id
+    target_wo.proposed_joint_start_date = payload.proposed_start_date
+    target_wo.proposed_joint_end_date = payload.proposed_end_date
+
+    db.commit()
+
+    return {"ok": True}
+
+
+@router.post("/{work_order_id}/respond-joint")
+def respond_joint_trenching(
+    work_order_id: int,
+    payload: RespondJointTrenchRequest,
+    db: Session = Depends(get_db)
+):
+    source_wo = db.query(WorkOrder).filter(WorkOrder.id == work_order_id).first()
+    if not source_wo or not source_wo.linked_work_order_id:
+        raise HTTPException(status_code=404, detail="Source work order or link not found")
+
+    target_wo = db.query(WorkOrder).filter(WorkOrder.id == source_wo.linked_work_order_id).first()
+    if not target_wo:
+        raise HTTPException(status_code=404, detail="Linked work order not found")
+
+    if payload.action == "reject":
+        source_wo.joint_trench_status = None
+        source_wo.initiator_work_order_id = None
+        source_wo.linked_work_order_id = None
+        source_wo.proposed_joint_start_date = None
+        source_wo.proposed_joint_end_date = None
+
+        target_wo.joint_trench_status = None
+        target_wo.initiator_work_order_id = None
+        target_wo.linked_work_order_id = None
+        target_wo.proposed_joint_start_date = None
+        target_wo.proposed_joint_end_date = None
+
+    elif payload.action == "accept":
+        source_wo.joint_trench_status = "accepted"
+        source_wo.start_date = source_wo.proposed_joint_start_date
+        source_wo.end_date = source_wo.proposed_joint_end_date
+        
+        target_wo.joint_trench_status = "accepted"
+        target_wo.start_date = target_wo.proposed_joint_start_date
+        target_wo.end_date = target_wo.proposed_joint_end_date
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    db.commit()
+    return {"ok": True}

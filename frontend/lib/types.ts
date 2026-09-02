@@ -27,6 +27,8 @@ export interface CoDigOpportunity {
   work_order_id: number;
   title: string;
   department: string;
+  target_start_date: string;
+  target_end_date: string;
 }
 
 export interface WorkOrderResponse {
@@ -39,6 +41,21 @@ export interface WorkOrderResponse {
   created_at: string;
   conflicts: ConflictItem[];
   co_dig_opportunities: CoDigOpportunity[];
+  joint_trench_status?: "proposed" | "accepted" | "rejected" | null;
+  initiator_work_order_id?: number | null;
+  linked_work_order_id?: number | null;
+  proposed_joint_start_date?: string | null;
+  proposed_joint_end_date?: string | null;
+}
+
+export interface ProposeJointPayload {
+  target_work_order_id: number;
+  proposed_start_date: string; // ISO datetime
+  proposed_end_date: string;
+}
+
+export interface RespondJointPayload {
+  action: "accept" | "reject";
 }
 
 export interface WorkOrderCreatePayload {

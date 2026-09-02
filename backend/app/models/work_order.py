@@ -26,6 +26,14 @@ class WorkOrder(Base):
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     status = Column(Enum(WorkOrderStatus), default=WorkOrderStatus.pending, nullable=False)
+    
+    # Joint Trenching Workflow
+    joint_trench_status = Column(String, nullable=True) # e.g. 'proposed', 'accepted', 'rejected'
+    initiator_work_order_id = Column(Integer, ForeignKey("work_orders.id"), nullable=True)
+    linked_work_order_id = Column(Integer, ForeignKey("work_orders.id"), nullable=True)
+    proposed_joint_start_date = Column(DateTime, nullable=True)
+    proposed_joint_end_date = Column(DateTime, nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # cached last conflict-check result, so the UI can render without re-querying PostGIS

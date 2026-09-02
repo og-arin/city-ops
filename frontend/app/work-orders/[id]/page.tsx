@@ -6,7 +6,7 @@ import Link from "next/link";
 import ConflictAlert from "@/components/work-orders/ConflictAlert";
 import { api } from "@/lib/api";
 import { STATUS_COLORS } from "@/lib/theme";
-import type { WorkOrderResponse, WorkOrderStatus } from "@/lib/types";
+import type { WorkOrderResponse, WorkOrderStatus, CoDigOpportunity } from "@/lib/types";
 import { TriangleAlert, CheckCircle2 } from "lucide-react";
 
 const STATUS_LABELS: Record<WorkOrderStatus, string> = {
@@ -58,6 +58,11 @@ export default function WorkOrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [acknowledging, setAcknowledging] = useState<number | null>(null);
 
+  const [proposalTarget, setProposalTarget] = useState<CoDigOpportunity | null>(null);
+  const [propStart, setPropStart] = useState("");
+  const [propEnd, setPropEnd] = useState("");
+  const [proposing, setProposing] = useState(false);
+
   const load = () => {
     if (!id) return;
     api
@@ -101,6 +106,35 @@ export default function WorkOrderDetailPage() {
       console.error("Acknowledge failed:", err);
     } finally {
       setAcknowledging(null);
+    }
+  };
+
+  const handlePropose = async () => {
+    if (!proposalTarget || !propStart || !propEnd) return;
+    setProposing(true);
+    try {
+      await api.proposeJointTrenching(id, {
+        target_work_order_id: proposalTarget.work_order_id,
+        proposed_start_date: `${propStart}T00:00:00Z`,
+        proposed_end_date: `${propEnd}T00:00:00Z`,
+      });
+      setProposalTarget(null);
+      load(); // Reload to get updated status
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send proposal.");
+    } finally {
+      setProposing(false);
+    }
+  };
+
+  const handleRespond = async (action: "accept" | "reject") => {
+    try {
+      await api.respondJointTrenching(id, { action });
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to respond to proposal.");
     }
   };
 
@@ -182,12 +216,52 @@ export default function WorkOrderDetailPage() {
                     <h3 className="text-sm font-semibold text-[var(--text-primary)] mt-1.5">{opp.title}</h3>
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">Work Order #{opp.work_order_id}</p>
                   </div>
-                  <button 
-                    onClick={() => alert(`Initiating joint trenching with ${DEPT_LABELS[opp.department] ?? opp.department}...`)}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors flex-none"
-                  >
-                    Initiate Joint Trenching
-                  </button>
+                  {order!.joint_trench_status === 'accepted' ? (
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 flex items-center gap-1.5">
+                        ✅ Joint Trenching Approved
+                      </span>
+                      <span className="text-[10px] text-[var(--text-muted)] font-mono-data">
+                        {formatDate(order!.start_date)} - {formatDate(order!.end_date)}
+                      </span>
+                    </div>
+                  ) : order!.joint_trench_status === 'proposed' ? (
+                    order!.id === order!.initiator_work_order_id ? (
+                      <button 
+                        disabled
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 cursor-not-allowed flex-none"
+                      >
+                        Proposal Sent (Pending)
+                      </button>
+                    ) : (
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="text-[10px] text-[var(--text-muted)] font-mono-data">
+                          Proposed Dates: {formatDate(order!.proposed_joint_start_date!)} - {formatDate(order!.proposed_joint_end_date!)}
+                        </span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleRespond("accept")}
+                            className="px-3 py-1 text-xs font-semibold rounded-lg bg-green-600 hover:bg-green-500 text-white transition-colors"
+                          >
+                            Accept Proposal
+                          </button>
+                          <button 
+                            onClick={() => handleRespond("reject")}
+                            className="px-3 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-hover)] border border-[var(--border)] hover:border-red-500/50 hover:text-red-400 text-[var(--text-muted)] transition-colors"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <button 
+                      onClick={() => setProposalTarget(opp)}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors flex-none"
+                    >
+                      Initiate Joint Trenching
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -207,6 +281,65 @@ export default function WorkOrderDetailPage() {
             checking={false}
           />
         </div>
+
+        {/* Proposal Modal */}
+        {proposalTarget && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="surface border border-[var(--border)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+              <div className="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center">
+                <h3 className="text-base font-bold text-[var(--text-primary)]">
+                  Propose Joint Trenching
+                </h3>
+                <button onClick={() => setProposalTarget(null)} className="text-[var(--text-muted)] hover:text-white">✕</button>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-[var(--text-muted)]">
+                  Coordinate with the <strong className="text-[var(--text-primary)]">{DEPT_LABELS[proposalTarget.department] ?? proposalTarget.department}</strong> to unify excavation timelines.
+                </p>
+                
+                <div className="surface-sunken p-3 rounded-xl border border-[var(--border)] space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-muted)]">Your Current Dates:</span>
+                    <span className="font-medium text-[var(--text-primary)]">{formatDate(order!.start_date)} - {formatDate(order!.end_date)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-muted)]">Their Current Dates:</span>
+                    <span className="font-medium text-[var(--text-primary)]">{formatDate(proposalTarget.target_start_date)} - {formatDate(proposalTarget.target_end_date)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Proposed Start Date</label>
+                    <input 
+                      type="date" 
+                      value={propStart}
+                      onChange={(e) => setPropStart(e.target.value)}
+                      className="w-full bg-[var(--surface-sunken)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Proposed End Date</label>
+                    <input 
+                      type="date" 
+                      value={propEnd}
+                      onChange={(e) => setPropEnd(e.target.value)}
+                      className="w-full bg-[var(--surface-sunken)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]" 
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handlePropose}
+                  disabled={!propStart || !propEnd || proposing}
+                  className="w-full btn-primary py-2.5 rounded-lg font-semibold text-sm disabled:opacity-50"
+                >
+                  {proposing ? "Sending..." : "Send Proposal"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

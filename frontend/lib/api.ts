@@ -8,6 +8,8 @@ import type {
   RAGQueryResponse,
   InfrastructureFeatureCollection,
   Layer,
+  ProposeJointPayload,
+  RespondJointPayload,
 } from "./types";
 
 const API_BASE =
@@ -88,6 +90,18 @@ export const api = {
       "/work-orders/acknowledge-conflict",
       { method: "POST", body: JSON.stringify({ conflict_log_id, dept_slug }) }
     ),
+
+  proposeJointTrenching: (work_order_id: number, payload: ProposeJointPayload) =>
+    request<{ ok: boolean }>(`/work-orders/${work_order_id}/propose-joint`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  respondJointTrenching: (work_order_id: number, payload: RespondJointPayload) =>
+    request<{ ok: boolean }>(`/work-orders/${work_order_id}/respond-joint`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 
   // --- RAG ---
   askRAG: (query: string) =>
