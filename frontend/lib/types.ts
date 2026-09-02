@@ -23,6 +23,11 @@ export type WorkOrderStatus =
   | "completed"
   | "rejected";
 
+export interface CoDigOpportunity {
+  work_order_id: number;
+  department: string;
+}
+
 export interface WorkOrderResponse {
   id: number;
   title: string;
@@ -32,6 +37,7 @@ export interface WorkOrderResponse {
   end_date: string;
   created_at: string;
   conflicts: ConflictItem[];
+  co_dig_opportunities: CoDigOpportunity[];
 }
 
 export interface WorkOrderCreatePayload {

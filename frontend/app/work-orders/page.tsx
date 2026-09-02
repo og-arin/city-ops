@@ -198,7 +198,22 @@ export default function WorkOrdersListPage() {
                           </p>
                         </td>
                         <td className="px-4 py-3.5">
-                          <StatusBadge status={o.status} />
+                          <div className="flex flex-col gap-2 items-start">
+                            <StatusBadge status={o.status} />
+                            {o.co_dig_opportunities && o.co_dig_opportunities.length > 0 && (
+                              <div className="flex flex-col gap-1">
+                                {o.co_dig_opportunities.map((opp, idx) => (
+                                  <span 
+                                    key={idx} 
+                                    className="text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/20 whitespace-nowrap cursor-help"
+                                    title={`Coordinate trenching with ${DEPT_LABELS[opp.department] ?? opp.department} to prevent duplicate excavation.`}
+                                  >
+                                    Co-Dig: {DEPT_LABELS[opp.department] ?? opp.department}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

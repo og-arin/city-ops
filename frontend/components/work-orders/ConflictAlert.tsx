@@ -86,7 +86,8 @@ export default function ConflictAlert({
   const warnCount = conflicts.filter((c) => c.severity === "yellow").length;
 
   return (
-    <div className="rounded-2xl border border-red-500/30 bg-red-500/5 overflow-hidden">
+    <div className="flex flex-col gap-3">
+      <div className="rounded-2xl border border-red-500/30 bg-red-500/5 overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-red-500/20 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -169,17 +170,18 @@ export default function ConflictAlert({
           );
         })}
       </ul>
+      </div>
 
       {/* Required coordination footer */}
-      <div className="px-4 py-2.5 border-t border-red-500/20">
-        <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-1.5">
+      <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-4">
+        <p className="text-[10px] text-indigo-300 font-semibold uppercase tracking-wider mb-2">
           Required Coordination
         </p>
         <div className="flex flex-wrap gap-1.5">
           {depts.map((d) => (
             <span
               key={d}
-              className="text-xs font-semibold px-2.5 py-1 rounded-full text-[var(--accent)] pill"
+              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-200 border border-indigo-500/30"
             >
               {DEPT_LABELS[d] ?? d}
             </span>

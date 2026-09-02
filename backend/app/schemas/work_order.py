@@ -24,6 +24,11 @@ class ConflictItem(BaseModel):
     acknowledged: bool = False
 
 
+class CoDigOpportunity(BaseModel):
+    work_order_id: int
+    department: str
+
+
 class WorkOrderResponse(BaseModel):
     id: int
     title: str
@@ -33,6 +38,7 @@ class WorkOrderResponse(BaseModel):
     end_date: datetime
     created_at: datetime
     conflicts: list[ConflictItem] = []
+    co_dig_opportunities: list[CoDigOpportunity] = []
 
     class Config:
         from_attributes = True

@@ -1,9 +1,10 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from geoalchemy2.shape import from_shape
 from shapely.geometry import shape
 
@@ -41,6 +42,27 @@ def _serialize_conflicts(db: Session, work_order_id: int) -> list[dict]:
         for log, asset in rows
     ]
 
+
+def _get_co_dig_opportunities(db: Session, wo: WorkOrder) -> list[dict]:
+    active_statuses = [
+        WorkOrderStatus.pending, 
+        WorkOrderStatus.conflict, 
+        WorkOrderStatus.coordinating, 
+        WorkOrderStatus.approved
+    ]
+    overlaps = db.query(WorkOrder).filter(
+        WorkOrder.id != wo.id,
+        WorkOrder.requesting_dept_slug != wo.requesting_dept_slug,
+        WorkOrder.status.in_(active_statuses),
+        func.ST_Intersects(WorkOrder.polygon, wo.polygon),
+        WorkOrder.start_date <= (wo.end_date + timedelta(days=30)),
+        WorkOrder.end_date >= (wo.start_date - timedelta(days=30))
+    ).all()
+    
+    return [
+        {"work_order_id": o.id, "department": o.requesting_dept_slug}
+        for o in overlaps
+    ]
 
 @router.post("", response_model=WorkOrderResponse)
 def create_work_order(payload: WorkOrderCreate, db: Session = Depends(get_db)):
@@ -101,6 +123,7 @@ def create_work_order(payload: WorkOrderCreate, db: Session = Depends(get_db)):
         end_date=work_order.end_date,
         created_at=work_order.created_at,
         conflicts=_serialize_conflicts(db, work_order.id) if conflicts else [],
+        co_dig_opportunities=_get_co_dig_opportunities(db, work_order),
     )
 
 
@@ -112,6 +135,7 @@ def list_work_orders(db: Session = Depends(get_db)):
             id=o.id, title=o.title, requesting_dept_slug=o.requesting_dept_slug,
             status=o.status.value, start_date=o.start_date, end_date=o.end_date,
             created_at=o.created_at, conflicts=_serialize_conflicts(db, o.id),
+            co_dig_opportunities=_get_co_dig_opportunities(db, o),
         ) for o in orders
     ]
 
@@ -125,6 +149,7 @@ def get_work_order(work_order_id: int, db: Session = Depends(get_db)):
         id=o.id, title=o.title, requesting_dept_slug=o.requesting_dept_slug,
         status=o.status.value, start_date=o.start_date, end_date=o.end_date,
         created_at=o.created_at, conflicts=_serialize_conflicts(db, o.id),
+        co_dig_opportunities=_get_co_dig_opportunities(db, o),
     )
 
 

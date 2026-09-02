@@ -4,6 +4,7 @@ RAG over department PDFs (permits, schedules, work-order history).
 import os
 import glob
 import shutil
+import datetime
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -51,17 +52,37 @@ def ingest_documents(docs_dir: str = "data/documents") -> int:
 def ask_regulation(query: str) -> dict:
     """Retrieves top relevant chunks and generates a grounded response."""
     store = _get_vectorstore()
-    # Increased k to 6 for broader coverage across dense guideline tables
-    results = store.similarity_search(query, k=6)
+    # Increased k to 20 for broader coverage across dense guideline tables
+    results = store.similarity_search(query, k=20)
 
     if not results:
         return {"answer": "No relevant permits or schedules found for this.", "sources": []}
 
-    context = "\n\n".join(f"[{r.metadata.get('source', 'unknown')}] {r.page_content}" for r in results)
-    sources = sorted(set(r.metadata.get("source", "unknown") for r in results))
+    def _clean_source_name(raw_name: str) -> str:
+        if not raw_name or raw_name == "unknown":
+            return "unknown"
+        mapping = {
+            "Guidlines_Road_Trenching_Activity_English - Copy.pdf": "PMC Trenching Guidelines",
+            "Telecommunications_Act_2023_RoW_rules_2024_Final.pdf": "Telecom RoW Rules"
+        }
+        if raw_name in mapping:
+            return mapping[raw_name]
+        clean_name = raw_name
+        if clean_name.lower().endswith(".pdf"):
+            clean_name = clean_name[:-4]
+        return clean_name.replace("_", " ")
 
-    prompt = f"""You are CityOps AI, a regulatory assistant for municipal officers. Answer the officer's question using ONLY the excerpts below.
-You MUST cite specific rule numbers, annexures, or rule tags (e.g., [PMC-18], [TEL-05], or Annexure-12) in your response.
+    context = "\n\n".join(f"[{_clean_source_name(r.metadata.get('source', 'unknown'))}] {r.page_content}" for r in results)
+    sources = sorted(set(_clean_source_name(r.metadata.get("source", "unknown")) for r in results))
+
+    current_date = datetime.date.today().strftime("%B %d, %Y")
+
+    prompt = f"""You are CityOps AI, a regulatory assistant for municipal officers.
+Today's date is {current_date}.
+
+Answer the user's specific question directly and concisely using ONLY the excerpts below. 
+IMPORTANT: Answer ONLY what was asked. Do not list unrelated rules, pre-requisites, or procedures unless the user explicitly requested them. Completely ignore excerpts that do not directly answer the specific query.
+You MUST cite specific rule numbers, annexures, or rule tags (e.g., [PMC-18]) in your response.
 If the excerpts do not contain the answer, say so plainly.
 
 Excerpts:

@@ -48,9 +48,13 @@ export default function WorkOrderForm({
 
   const handleAutoAudit = () => {
     if (!onAutoAudit || !hasConflicts) return;
-    const depts = Array.from(new Set(conflicts.map((c) => c.owner_dept_slug)));
-    const deptList = depts.join(" and ");
-    const query = `Work planned intersecting ${deptList}. Summarize mandatory pre-excavation notices, deposit requirements, and trench refilling rules.`;
+    
+    const uniqueLayers = Array.from(new Set(conflicts.map(c => c.layer)))
+      .map(layer => layer.charAt(0).toUpperCase() + layer.slice(1))
+      .join(", ");
+      
+    const query = `I am planning an excavation intersecting these specific utilities: **${uniqueLayers}**. Please audit compliance. What are the mandatory rules for: newspaper public notices, traffic police coordination, site barricading, 100m trenching limits, and restoration requirements for damaging existing underground utilities?`;
+    
     onAutoAudit(query);
   };
 

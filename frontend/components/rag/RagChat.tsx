@@ -10,9 +10,9 @@ interface ChatMessage {
 }
 
 const QUICK_CHIPS = [
-  "Barricade rules",
-  "Length limits",
-  "Telecom fees",
+  "Monsoon excavation ban dates?",
+  "Standard trench refilling process?",
+  "Penalty for damaged utilities?",
 ];
 
 export interface RagChatHandle {
@@ -24,13 +24,15 @@ const RagChat = forwardRef<RagChatHandle>(function RagChat(_, ref) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastUserMsgRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages change
+  // Scroll to the last user message when it is added
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === "user") {
+      lastUserMsgRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [messages, loading]);
+  }, [messages]);
 
   const doSend = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -84,8 +86,14 @@ const RagChat = forwardRef<RagChatHandle>(function RagChat(_, ref) {
             Ask a question about city regulations, or use the quick chips below.
           </p>
         )}
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+        {messages.map((msg, i) => {
+          const isLastUserMsg = msg.role === "user" && i === messages.map(m => m.role).lastIndexOf("user");
+          return (
+          <div 
+            key={i} 
+            ref={isLastUserMsg ? lastUserMsgRef : null}
+            className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
             {msg.role === "assistant" && (
               <Bot className="w-4 h-4 text-indigo-400 flex-none mt-0.5" />
             )}
@@ -102,7 +110,7 @@ const RagChat = forwardRef<RagChatHandle>(function RagChat(_, ref) {
               <User className="w-4 h-4 text-slate-400 flex-none mt-0.5" />
             )}
           </div>
-        ))}
+        )})}
         {loading && (
           <div className="flex items-center gap-2 text-indigo-400 text-xs">
             <Loader2 className="w-4 h-4 animate-spin" />
