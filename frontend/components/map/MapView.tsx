@@ -90,28 +90,33 @@ export default function MapView({
         try {
           const data = await api.getInfrastructure(layer);
 
-          // Safety checks after the async await
-          if (cancelled || !mapRef.current || !mapRef.current.isStyleLoaded()) continue;
+          // Safety checks after the async await. NOTE: don't gate on
+          // isStyleLoaded() here — adding a source makes it report "loading"
+          // again until that source's tiles finish, so checking it mid-loop
+          // races with the previous layer's own load and randomly skips
+          // this one. The map's "load" event (isMapLoaded) already
+          // guarantees the style itself is ready to accept sources/layers.
+          if (cancelled || !mapRef.current) continue;
           if (mapRef.current.getSource(sourceId)) continue;
 
           mapRef.current.addSource(sourceId, { type: "geojson", data: data as any });
 
           const cfg = LAYER_CONFIG[layer];
           const isFill = cfg.type === "fill";
+          const visibility = activeLayers.includes(layer) ? "visible" : "none";
 
           mapRef.current.addLayer({
             id: sourceId,
             type: isFill ? "fill" : "line",
             source: sourceId,
             layout: {
-              visibility: activeLayers.includes(layer) ? "visible" : "none",
+              visibility,
               ...(isFill ? {} : { "line-cap": "round", "line-join": "round" }),
             },
-            paint: isFill 
+            paint: isFill
               ? {
                   "fill-color": cfg.color,
                   "fill-opacity": 0.15,
-                  "fill-outline-color": "#ffffff",
                 }
               : {
                   "line-color": cfg.color,
@@ -121,6 +126,19 @@ export default function MapView({
                   ...(cfg.dashed ? { "line-dasharray": [2, 2] } : {}),
                 },
           });
+
+          // fill-outline-color is a fixed ~1px antialiased line and barely
+          // reads on a dark basemap — add a real stroke so ward boundaries
+          // are actually visible.
+          if (isFill) {
+            mapRef.current.addLayer({
+              id: `${sourceId}-outline`,
+              type: "line",
+              source: sourceId,
+              layout: { visibility, "line-cap": "round", "line-join": "round" },
+              paint: { "line-color": cfg.color, "line-width": 2, "line-opacity": 0.8 },
+            });
+          }
         } catch (err) {
           console.error(`Failed to load layer "${layer}":`, err);
         }
@@ -141,9 +159,10 @@ export default function MapView({
 
     (Object.keys(LAYER_CONFIG) as Layer[]).forEach((layer) => {
       const id = `infra-${layer}`;
-      if (map.getLayer(id)) {
-        map.setLayoutProperty(id, "visibility", activeLayers.includes(layer) ? "visible" : "none");
-      }
+      const visibility = activeLayers.includes(layer) ? "visible" : "none";
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visibility);
+      const outlineId = `${id}-outline`;
+      if (map.getLayer(outlineId)) map.setLayoutProperty(outlineId, "visibility", visibility);
     });
   }, [activeLayers, isMapLoaded]);
 

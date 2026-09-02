@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,6 +16,7 @@ from app.services.spatial import check_conflicts
 from app.services.notifications import notify_conflict
 
 router = APIRouter(prefix="/work-orders", tags=["work-orders"])
+logger = logging.getLogger(__name__)
 
 
 def _serialize_conflicts(db: Session, work_order_id: int) -> list[dict]:
@@ -78,7 +80,12 @@ def create_work_order(payload: WorkOrderCreate, db: Session = Depends(get_db)):
             d.contact_email for d in db.query(Department).filter(Department.slug.in_(affected_depts)).all()
             if d.contact_email
         ]
-        notify_conflict(work_order.title, work_order.requesting_dept_slug, conflicts, recipients)
+        try:
+            notify_conflict(work_order.title, work_order.requesting_dept_slug, conflicts, recipients)
+        except Exception:
+            # Best-effort alert — a Resend outage or bad API key must not
+            # roll back a work order that was already correctly created.
+            logger.exception("notify_conflict failed for work order %s", work_order.id)
     else:
         work_order.status = WorkOrderStatus.approved
 

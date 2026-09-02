@@ -1,7 +1,8 @@
+import json
+
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from geoalchemy2.shape import to_shape
-from shapely.geometry import mapping
 
 from app.core.db import get_db
 from app.models.infrastructure import InfrastructureAsset
@@ -17,25 +18,36 @@ def get_infrastructure(
     """
     Returns a GeoJSON FeatureCollection — frontend can feed this straight into
     a Mapbox/Leaflet source with zero transformation.
+
+    Geometry is serialized to GeoJSON by PostGIS (ST_AsGeoJSON) instead of
+    round-tripping every row through shapely in Python — for a few thousand
+    road/drainage segments the Python loop was taking 6-11s and losing the
+    race against the frontend's request timeout.
     """
-    q = db.query(InfrastructureAsset)
+    q = db.query(
+        InfrastructureAsset.id,
+        InfrastructureAsset.layer,
+        InfrastructureAsset.name,
+        InfrastructureAsset.owner_dept_slug,
+        InfrastructureAsset.depth_meters,
+        func.ST_AsGeoJSON(InfrastructureAsset.geom).label("geom"),
+    )
     if layer:
         q = q.filter(InfrastructureAsset.layer == layer)
-    assets = q.all()
 
-    features = []
-    for a in assets:
-        geom = to_shape(a.geom)
-        features.append({
+    features = [
+        {
             "type": "Feature",
-            "geometry": mapping(geom),
+            "geometry": json.loads(row.geom),
             "properties": {
-                "id": a.id,
-                "layer": a.layer,
-                "name": a.name,
-                "owner_dept_slug": a.owner_dept_slug,
-                "depth_meters": a.depth_meters,
+                "id": row.id,
+                "layer": row.layer,
+                "name": row.name,
+                "owner_dept_slug": row.owner_dept_slug,
+                "depth_meters": row.depth_meters,
             },
-        })
+        }
+        for row in q.all()
+    ]
 
     return {"type": "FeatureCollection", "features": features}
