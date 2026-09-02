@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { api } from "@/lib/api";
 import type { Layer, InfrastructureFeatureCollection } from "@/lib/types";
+import { LAYER_COLORS } from "@/lib/theme";
 import StyleSwitcher, { BASE_STYLES } from "./StyleSwitcher";
 
 // 1. Token assigned strictly outside the React lifecycle
@@ -12,9 +13,9 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const LAYER_CONFIG: Record<Layer, { color: string; width?: number; dashed?: boolean; type?: "line" | "fill"; offset?: number }> = {
-  ward: { color: "#8b5cf6", type: "fill" },
-  road: { color: "#64748b", width: 6 },
-  drainage: { color: "#00FFCC", width: 3, dashed: true, offset: 4 },
+  ward: { color: LAYER_COLORS.ward, type: "fill" },
+  road: { color: LAYER_COLORS.road, width: 6 },
+  drainage: { color: LAYER_COLORS.drainage, width: 3, dashed: true, offset: 4 },
 };
 
 // Module-level (not a ref) so it survives MapView unmounting/remounting as
