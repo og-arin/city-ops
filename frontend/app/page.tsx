@@ -100,7 +100,7 @@ export default function LandingPage() {
     <main className="relative h-full flex flex-col items-center justify-center text-center px-6 overflow-hidden">
       {/* Background map — decorative, non-interactive */}
       <div className="absolute inset-0">
-        <MapView interactive={false} zoom={12.5} />
+        <MapView interactive={false} zoom={12.5} activeLayers={[]} />
       </div>
       {/* Dark overlay so text stays legible regardless of the map tiles under it.
           Fixed (not theme-reactive) since the map behind it never changes with

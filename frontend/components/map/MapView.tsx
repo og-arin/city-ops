@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { api } from "@/lib/api";
 import type { Layer, InfrastructureFeatureCollection } from "@/lib/types";
+import StyleSwitcher, { BASE_STYLES } from "./StyleSwitcher";
 
 // 1. Token assigned strictly outside the React lifecycle
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
@@ -15,6 +16,10 @@ const LAYER_CONFIG: Record<Layer, { color: string; width?: number; dashed?: bool
   road: { color: "#64748b", width: 6 },
   drainage: { color: "#00FFCC", width: 3, dashed: true, offset: 4 },
 };
+
+// Module-level (not a ref) so it survives MapView unmounting/remounting as
+// the user navigates between pages — one fetch per layer per session.
+const layerDataCache: Partial<Record<Layer, InfrastructureFeatureCollection>> = {};
 
 interface MapViewProps {
   center?: [number, number];
@@ -37,6 +42,10 @@ export default function MapView({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [baseStyle, setBaseStyle] = useState(BASE_STYLES[0].id);
+  // Bumped after a style swap so the layer-loading effect below re-adds the
+  // infra sources/layers that map.setStyle() just wiped.
+  const [styleVersion, setStyleVersion] = useState(0);
 
   // --- MAP INITIALIZATION ---
   useEffect(() => {
@@ -44,7 +53,7 @@ export default function MapView({
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
+      style: `mapbox://styles/mapbox/${baseStyle}`,
       center,
       zoom,
       interactive,
@@ -88,7 +97,8 @@ export default function MapView({
         if (mapRef.current.getSource(sourceId)) continue; // Prevent double-fetching
 
         try {
-          const data = await api.getInfrastructure(layer);
+          const data = layerDataCache[layer] ?? (await api.getInfrastructure(layer));
+          layerDataCache[layer] = data;
 
           // Safety checks after the async await. NOTE: don't gate on
           // isStyleLoaded() here — adding a source makes it report "loading"
@@ -150,7 +160,16 @@ export default function MapView({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMapLoaded]);
+  }, [isMapLoaded, styleVersion]);
+
+  // --- BASE STYLE SWITCHING ---
+  const handleStyleChange = (styleId: string) => {
+    const map = mapRef.current;
+    if (!map || styleId === baseStyle) return;
+    setBaseStyle(styleId);
+    map.once("style.load", () => setStyleVersion((v) => v + 1));
+    map.setStyle(`mapbox://styles/mapbox/${styleId}`);
+  };
 
   // --- LAYER VISIBILITY TOGGLES ---
   useEffect(() => {
@@ -170,6 +189,9 @@ export default function MapView({
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '400px' }}>
       <div ref={mapContainer} style={{ position: 'absolute', inset: 0, borderRadius: '0.5rem' }} />
+      {interactive && (
+        <StyleSwitcher activeStyle={baseStyle} onChange={handleStyleChange} center={center} token={MAPBOX_TOKEN} />
+      )}
       {children}
     </div>
   );

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Landmark } from "lucide-react";
+import { Building2 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
@@ -29,7 +29,7 @@ export default function Navbar() {
         {/* Logo & Branding */}
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg surface flex items-center justify-center">
-            <Landmark className="w-4 h-4 text-[var(--accent)]" />
+            <Building2 className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <span className="font-bold text-[var(--text-primary)] text-sm tracking-tight">
             CityOps AI
